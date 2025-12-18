@@ -1,10 +1,10 @@
 <?php
 $host = "localhost";
 $user = "root";
-$password = "1234";
+$password = "";
 $dbname = "JapanGo";
 
-$conn = mysqli_connect($host, $user, $password, $dbname);
+$conn = mysqli_connect($host, $user, $password, $dbname, 3307);
 if (!$conn) {
     die("資料庫連線失敗：" . mysqli_connect_error());
 }
