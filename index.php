@@ -1,3 +1,17 @@
+<?php
+$host = "localhost";
+$user = "root";
+$password = "";
+$dbname = "JapanGo";
+
+$conn = mysqli_connect($host, $user, $password, $dbname);
+mysqli_set_charset($conn, "utf8_general_ci");
+
+if (!$conn) {
+  die("資料庫連線失敗");
+}
+?>
+
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
@@ -28,9 +42,47 @@
       <div class="section-title">日本旅遊地圖</div>
       <div class="map-placeholder">
         （此處放日本地圖｜可點擊地區）
+        <script>
+          function selectEvent(title, location, description, route) {
+            const map = document.getElementById("map");
+            map.innerHTML = `
+              <strong>${title}</strong><br><br>
+              📍 地點：${location}<br>
+              📝 活動內容：${description}<br>
+              🚆 建議路線：${route}
+            `;
+          }
+</script>
+
       </div>
     </section>
   </div>
+  <!--活動區塊-->
+  <?php
+  $sql = "SELECT * FROM events";
+  $result = mysqli_query($conn, $sql);
+  ?>
+
+  <section class="event-area">
+    <div class="section-title">近期推薦活動</div>
+    <div class="event-list">
+
+      <?php while($row = mysqli_fetch_assoc($result)) { ?>
+        <div class="event-card"
+          onclick="selectEvent(
+            '<?= $row['title'] ?>',
+            '<?= $row['location'] ?>',
+            '<?= $row['description'] ?>',
+            '<?= $row['route'] ?>'
+          )">
+          <h3><?= $row['title'] ?></h3>
+          <p>地點：<?= $row['location'] ?></p>
+          <p>時間：<?= $row['start_date'] ?></p>
+        </div>
+      <?php } ?>
+
+  </div>
+</section>
 
   <footer>
     © 2025 JapanGo｜全端日本旅遊專題
