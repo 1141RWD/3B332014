@@ -43,14 +43,19 @@ if (!$result) {
   <h1>JapanGo 日本旅遊互動平台</h1>
   <p>旅遊路線 × 入境知識 × 日文學習 × 小遊戲</p>
 </header>
+<script>
+function goTo(page) {
+  window.location.href = page;
+}
+</script>
 
 <!-- 導覽列 -->
 <nav class="navbar">
   <ul>
     <li onclick="goTo('route.html')">旅遊路線</li>
-    <li onclick="goTo('customs.html')">入境注意</li>
-    <li onclick="goTo('quiz.html')">Q&A 小遊戲</li>
-    <li onclick="goTo('japanese.html')">日文學習</li>
+    <li onclick="goTo('customs.php')">入境注意</li>
+    <li onclick="goTo('internal.php')">Q&A 小遊戲</li>
+    <li onclick="goTo('japanese.php')">日文學習</li>
   </ul>
 </nav>
 
@@ -58,7 +63,7 @@ if (!$result) {
   <section class="map-area">
     <div class="section-title">日本旅遊地圖</div>
 
-    <!-- ★修改：原本 placeholder 改成真正地圖 -->
+    <!-- 修改：原本 placeholder 改成真正地圖 -->
     <div id="map" style="height:300px;"></div>
   </section>
 </div>
@@ -85,11 +90,14 @@ $result = mysqli_query($conn, $sql);
   ?>
         <div class="event-card"
           onclick="selectEvent(
-            '<?= $row['title'] ?>',
-            '<?= $row['location'] ?>',
-            '<?= $row['description'] ?>',
-            '<?= $row['route'] ?>'
-          )">
+          <?= $row['latitude'] ?>,
+          <?= $row['longitude'] ?>,
+          '<?= $row['title'] ?>',
+          '<?= $row['location'] ?>',
+          '<?= $row['description'] ?>',
+          '<?= $row['route'] ?>'
+          )"
+
           <h3><?= $row['title'] ?></h3>
           <p>地點：<?= $row['location'] ?></p>
           <p>時間：<?= $row['start_date'] ?></p>
@@ -107,38 +115,13 @@ $result = mysqli_query($conn, $sql);
   © 2025 JapanGo｜全端日本旅遊專題
 </footer>
 
-<script>
-function goTo(page) {
-  window.location.href = page;
-}
 
-/* ★新增：Leaflet 地圖程式碼 */
-let map = L.map('map').setView([36.2048, 138.2529], 5);
+<!-- Leaflet JS（已在 head 也可，但建議放底部） -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-// OpenStreetMap 圖層
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  attribution: '© OpenStreetMap contributors'
-}).addTo(map);
+<!-- 你的地圖 JS -->
+<script src="js/map.js"></script>
 
-let marker;
-
-// 點活動 → 地圖移動 + marker
-function selectEvent(lat, lng, title, location, description, route) {
-  map.setView([lat, lng], 13);
-
-  if (marker) {
-    map.removeLayer(marker);
-  }
-
-  marker = L.marker([lat, lng]).addTo(map);
-  marker.bindPopup(`
-    <strong>${title}</strong><br>
-    📍 ${location}<br>
-    📝 ${description}<br>
-    🚆 ${route}
-  `).openPopup();
-}
-</script>
 
 </body>
 </html>
