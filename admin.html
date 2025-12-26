@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>管理模式</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+body { font-family:"Noto Sans TC","微軟正黑體"; background:#e6f0ff; margin:0; }
+header { background:#1976d2; color:white; text-align:center; padding:20px; }
+.admin-box { max-width:900px; margin:30px auto; padding:20px; background:white; border-radius:10px; box-shadow:0 5px 15px rgba(0,0,0,0.1);}
+input, select { padding:8px; margin:5px 0; width:calc(100% - 16px); }
+button { padding:10px; margin:5px 0; border:none; border-radius:5px; background:#1976d2; color:white; cursor:pointer;}
+button:hover { background:#1565c0; }
+.event-card { padding:10px; margin:10px 0; border:1px solid #ccc; border-radius:5px; background:#f0f4ff;}
+.nav-btn { position:fixed; top:20px; right:20px; padding:10px 15px; background:#1565c0; color:white; border:none; border-radius:5px; cursor:pointer;}
+</style>
+</head>
+<body>
+
+<header><h1>管理模式｜活動管理</h1></header>
+
+<button class="nav-btn" onclick="backHome()">🏠 回首頁</button>
+
+<div class="admin-box">
+<h2>新增活動</h2>
+<input id="newTitle" placeholder="標題">
+<input id="newLocation" placeholder="地點">
+<input id="newLat" placeholder="緯度">
+<input id="newLng" placeholder="經度">
+<input id="newDesc" placeholder="描述">
+<input id="newRoute" placeholder="建議路線">
+<select id="newRegion">
+  <option value="北海道">北海道</option>
+  <option value="本洲">本洲</option>
+  <option value="九州四國">九州四國</option>
+</select>
+<button onclick="addEvent()">新增</button>
+
+<h2>活動列表</h2>
+<div id="eventList"></div>
+</div>
+
+<script>
+// 檢查登入
+if(localStorage.getItem("admin")!=="true"){
+  alert("請先登入管理者");
+  window.location.href="index.html";
+}
+
+// 從首頁事件載入（模擬讀取index資料）
+let events = JSON.parse(localStorage.getItem("events")) || [
+  {title:"札幌雪祭",location:"札幌",lat:43.0618,lng:141.3545,desc:"冬季必看雪雕",route:"札幌站→大通公園",region:"北海道"},
+  {title:"京都清水寺",location:"京都",lat:35.0116,lng:135.7681,desc:"世界文化遺產",route:"京都站→清水寺",region:"本洲"}
+];
+
+function renderEvents(){
+  const list=document.getElementById("eventList");
+  list.innerHTML="";
+  events.forEach((e,i)=>{
+    const card=document.createElement("div");
+    card.className="event-card";
+    card.innerHTML=`
+      <b>${e.title}</b> (${e.region}) <br>
+      地點:${e.location} <br>
+      描述:${e.desc} <br>
+      路線:${e.route} <br>
+      <button onclick="editEvent(${i})">編輯</button>
+      <button onclick="deleteEvent(${i})">刪除</button>
+    `;
+    list.appendChild(card);
+  });
+  localStorage.setItem("events",JSON.stringify(events));
+}
+
+function addEvent(){
+  const e={
+    title:document.getElementById("newTitle").value,
+    location:document.getElementById("newLocation").value,
+    lat:parseFloat(document.getElementById("newLat").value),
+    lng:parseFloat(document.getElementById("newLng").value),
+    desc:document.getElementById("newDesc").value,
+    route:document.getElementById("newRoute").value,
+    region:document.getElementById("newRegion").value
+  };
+  events.push(e);
+  renderEvents();
+}
+
+function editEvent(i){
+  const e=events[i];
+  const newTitle=prompt("修改標題",e.title); if(newTitle)e.title=newTitle;
+  const newLoc=prompt("修改地點",e.location); if(newLoc)e.location=newLoc;
+  renderEvents();
+}
+
+function deleteEvent(i){
+  if(confirm("確定刪除？")) events.splice(i,1);
+  renderEvents();
+}
+
+function backHome(){
+  localStorage.setItem("admin","true"); // 保持管理模式
+  window.location.href="index.html";
+}
+
+renderEvents();
+</script>
+</body>
+</html>

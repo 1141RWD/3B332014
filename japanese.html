@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>日文學習｜JapanGo</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="indexstyle.css">
+
+<style>
+.jp-filters { text-align:center; margin:20px 0; }
+.jp-filters button {
+  margin:5px; padding:10px 16px;
+  border:none; border-radius:20px;
+  background:#eee; cursor:pointer;
+}
+.jp-filters button.active {
+  background:#d32f2f; color:#fff;
+}
+
+.jp-card {
+  background:#fff;
+  padding:18px;
+  margin:15px auto;
+  max-width:600px;
+  border-radius:12px;
+  box-shadow:0 4px 12px rgba(0,0,0,.1);
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+.jp-text strong { font-size:1.2rem; }
+.jp-btn {
+  border:none; background:#d32f2f;
+  color:#fff; padding:8px 12px;
+  border-radius:8px; cursor:pointer;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1>日文學習</h1>
+  <p>日本旅遊常用日語</p>
+</header>
+
+<nav class="navbar">
+  <ul>
+    <li onclick="goTo('index.html')">首頁</li>
+    <li onclick="goTo('customs.html')">入境注意</li>
+    <li onclick="goTo('japanese.html')">日文學習</li>
+  </ul>
+</nav>
+
+<div class="container">
+
+  <div class="jp-filters">
+    <button onclick="filterType('all')" class="active">全部</button>
+    <button onclick="filterType('greet')">招呼語</button>
+    <button onclick="filterType('shop')">購物 / 問價</button>
+  </div>
+
+  <div id="jp-list"></div>
+
+</div>
+
+<script>
+const phrases = [
+  { jp:"こんにちは", zh:"你好 / 午安", type:"greet", audio:"konnichiwa.mp3" },
+  { jp:"おはようございます", zh:"早安", type:"greet", audio:"ohayo.mp3" },
+  { jp:"ありがとうございます", zh:"謝謝", type:"greet", audio:"arigato.mp3" },
+
+  { jp:"いくらですか？", zh:"這個多少錢？", type:"shop", audio:"ikura.mp3" },
+  { jp:"これください", zh:"我要這個", type:"shop", audio:"kore.mp3" },
+  { jp:"カード使えますか？", zh:"可以刷卡嗎？", type:"shop", audio:"card.mp3" }
+];
+
+function render(list){
+  const box = document.getElementById("jp-list");
+  box.innerHTML = "";
+  list.forEach(p=>{
+    box.innerHTML += `
+      <div class="jp-card">
+        <div class="jp-text">
+          <strong>${p.jp}</strong><br>${p.zh}
+        </div>
+        <button class="jp-btn" onclick="play('${p.audio}')">🔊</button>
+      </div>
+    `;
+  });
+}
+
+function filterType(type){
+  document.querySelectorAll(".jp-filters button")
+    .forEach(b=>b.classList.remove("active"));
+  event.target.classList.add("active");
+
+  if(type==="all") render(phrases);
+  else render(phrases.filter(p=>p.type===type));
+}
+
+function play(file){
+  new Audio("audio/"+file).play();
+}
+
+function goTo(p){ location.href=p; }
+
+render(phrases);
+</script>
+
+</body>
+</html>

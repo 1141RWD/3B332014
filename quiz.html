@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>JapanGo｜日本國內 Q&A</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body {
+      font-family: "Noto Sans TC", "微軟正黑體", sans-serif;
+      background: #eef2f7;
+      margin: 0;
+    }
+
+    header {
+      background: #4caf50;
+      color: white;
+      text-align: center;
+      padding: 25px;
+    }
+
+    .quiz-box {
+      max-width: 600px;
+      background: white;
+      margin: 40px auto;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+    }
+
+    h2 {
+      margin-top: 0;
+    }
+
+    button {
+      display: block;
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border: none;
+      border-radius: 8px;
+      background: #4caf50;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+    }
+/* navbar */
+    .navbar {
+    background: white;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    .navbar ul {
+    display: flex;
+    justify-content: center;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    }
+
+    .navbar li {
+    padding: 15px 25px;
+    cursor: pointer;
+    font-weight: 500;
+    }
+
+    .navbar li:hover {
+    background: #43a047;
+    color: white;
+    }
+/*-----------------------------------------------*/
+    button:hover {
+      background: #43a047;
+    }
+
+    .result {
+      margin-top: 15px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+
+<body>
+
+<header>
+  <h1>日本國內旅遊 Q&A</h1>
+  <p>測試你對日本生活文化的了解</p>
+</header>
+
+<nav class="navbar">
+  <ul>
+    <li onclick="goTo('index.html')">首頁</li>
+    <li onclick="goTo('customs.html')">入境注意</li>
+    <li onclick="goTo('internal.html')">國內注意</li>
+    <li onclick="goTo('Entryquiz.html')">入境 Q&A</li>
+    <li onclick="goTo('quiz.html')">國內 Q&A</li>
+    <li onclick="goTo('japanese.html')">日文學習</li>
+  </ul>
+</nav>
+
+<div class="quiz-box">
+  <h2 id="question"></h2>
+  <div id="choices"></div>
+  <div class="result" id="result"></div>
+</div>
+
+<script>
+function goTo(page) {
+  window.location.href = page;
+}
+const quiz = [
+  {
+    q: "在日本電車上，哪個行為是正確的？",
+    c: ["大聲講電話", "吃便當", "將手機設為靜音"],
+    a: 2
+  },
+  {
+    q: "在日本餐廳用餐後，是否需要給小費？",
+    c: ["一定要給", "看心情", "不需要"],
+    a: 2
+  },
+  {
+    q: "日本街道垃圾桶較少，垃圾應該？",
+    c: ["隨地丟棄", "帶回家丟", "交給店員"],
+    a: 1
+  }
+];
+
+let index = 0;
+
+function loadQuiz() {
+  document.getElementById("result").innerText = "";
+  document.getElementById("question").innerText = quiz[index].q;
+  const choicesDiv = document.getElementById("choices");
+  choicesDiv.innerHTML = "";
+
+  quiz[index].c.forEach((text, i) => {
+    const btn = document.createElement("button");
+    btn.innerText = text;
+    btn.onclick = () => checkAnswer(i);
+    choicesDiv.appendChild(btn);
+  });
+}
+
+function checkAnswer(choice) {
+  const result = document.getElementById("result");
+  if (choice === quiz[index].a) {
+    result.innerText = "✅ 答對了！";
+  } else {
+    result.innerText = "❌ 答錯了，再想想看～";
+  }
+
+  setTimeout(() => {
+    index = (index + 1) % quiz.length;
+    loadQuiz();
+  }, 1200);
+}
+
+loadQuiz();
+</script>
+
+</body>
+</html>

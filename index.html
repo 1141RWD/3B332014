@@ -1,46 +1,174 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-  <meta charset="UTF-8" />
-  <title>JapanGo｜日本旅遊互動平台</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="indexstyle.css">
+<meta charset="UTF-8">
+<title>JapanGo｜日本旅遊互動平台</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link rel="stylesheet" href="indexstyle.css">
+
+<!-- Leaflet -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<style>
+/* --- 登入按鈕與登入框樣式 --- */
+.login-btn {
+  position: absolute;
+  top: 15px;
+  right: 20px;
+  padding: 10px 20px;
+  background: #1976d2;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  z-index: 1000;
+}
+.login-btn:hover { background: #1565c0; }
+
+.login-box {
+  position: fixed;          /* 改成固定位置，方便置中 */
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%); /* 完全置中 */
+  width: 300px;
+  padding: 20px;
+  background: white;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+  border-radius: 10px;
+  display: none;            /* 預設隱藏 */
+  z-index: 1000;
+}
+.login-box input {
+  width: 100%;
+  padding: 8px;
+  margin: 5px 0;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+}
+.login-box button {
+  width: 100%;
+  padding: 10px;
+  background: #1976d2;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+.login-box button:hover { background: #1565c0; }
+</style>
 </head>
+
 <body>
 
-  <header>
-    <h1>JapanGo 日本旅遊互動平台</h1>
-    <p>旅遊路線 × 入境知識 × 日文學習 × 小遊戲</p>
-  </header>
+<header>
+  <h1>JapanGo 日本旅遊互動平台</h1>
+  <p>旅遊路線 × 入境知識 × 日文學習 × 小遊戲</p>
+</header>
 
-  <!-- 導覽列 -->
-  <nav class="navbar">
-    <ul>
-      <li onclick="goTo('route.html')">旅遊路線</li>
-      <li onclick="goTo('customs.html')">入境注意</li>
-      <li onclick="goTo('quiz.html')">QA 小遊戲</li>
-      <li onclick="goTo('japanese.html')">日文學習</li>
-    </ul>
-  </nav>
+<!-- 管理者登入按鈕 -->
+<button class="login-btn" onclick="openLogin()">管理者登入</button>
 
-  <div class="container">
-    <section class="map-area">
-      <div class="section-title">日本旅遊地圖</div>
-      <div class="map-placeholder">
-        （此處放日本地圖｜可點擊地區）
-      </div>
-    </section>
-  </div>
+<!-- 登入框 -->
+<div id="loginBox" class="login-box">
+  <h3>管理者登入</h3>
+  <input id="adminUser" placeholder="帳號"><br>
+  <input id="adminPass" type="password" placeholder="密碼"><br><br>
+  <button onclick="login()">登入</button>
+</div>
 
-  <footer>
-    © 2025 JapanGo｜全端日本旅遊專題
-  </footer>
 
-  <script>
-    function goTo(page) {
-      window.location.href = page;
-    }
-  </script>
+<!-- 導覽列 -->
+<nav class="navbar">
+  <ul>
+    <li onclick="goTo('index.html')">首頁</li>
+    <li onclick="goTo('customs.html')">入境注意</li>
+    <li onclick="goTo('internal.html')">國內注意</li>
+    <li onclick="goTo('Entryquiz.html')">入境 Q&A</li>
+    <li onclick="goTo('quiz.html')">國內 Q&A</li>
+    <li onclick="goTo('japanese.html')">日文學習</li>
+  </ul>
+</nav>
+
+<div class="container">
+  <section class="map-area">
+    <div class="section-title">日本旅遊地圖</div>
+    <div id="map" style="height:300px;"></div>
+  </section>
+</div>
+
+<section class="event-area">
+  <div class="section-title">推薦活動</div>
+  <h2 class="region-title">📍 北海道</h2>
+  <div class="event-list" id="hokkaido"></div>
+  <h2 class="region-title">📍 本洲</h2>
+  <div class="event-list" id="honshu"></div>
+  <h2 class="region-title">📍 九州・四國</h2>
+  <div class="event-list" id="kyushu"></div>
+</section>
+
+<footer>
+  © 2025 JapanGo｜前端互動專題
+</footer>
+
+<script>
+// --- 管理者登入 JS ---
+function openLogin() {
+  const box = document.getElementById("loginBox");
+  box.style.display = (box.style.display === "block") ? "none" : "block";
+}
+
+function login() {
+  const user = document.getElementById("adminUser").value;
+  const pass = document.getElementById("adminPass").value;
+
+  if(user === "admin" && pass === "1234"){
+    localStorage.setItem("admin","true");
+    alert("登入成功，進入管理模式");
+    window.location.href = "admin.html";
+  } else {
+    alert("帳號或密碼錯誤");
+  }
+}
+
+// --- 導覽列 ---
+function goTo(p){ location.href=p; }
+
+// --- 活動假資料與 Leaflet 地圖 ---
+const events = [
+  {region:"北海道", title:"札幌雪祭", location:"札幌", lat:43.0618, lng:141.3545, desc:"冬季必看雪雕活動", route:"札幌站 → 大通公園"},
+  {region:"本洲", title:"京都清水寺", location:"京都", lat:35.0116, lng:135.7681, desc:"世界文化遺產", route:"京都站 → 清水寺"},
+  {region:"九州四國", title:"福岡屋台", location:"福岡", lat:33.5902, lng:130.4017, desc:"夜晚屋台美食", route:"博多站 → 中洲"}
+];
+
+let map = L.map('map').setView([36.2,138.2],5);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{ attribution:'© OpenStreetMap'}).addTo(map);
+
+let marker, line;
+
+// 建立活動卡片
+events.forEach(e=>{
+  const card = `<div class="event-card" onclick="selectEvent(${e.lat},${e.lng},'${e.title}','${e.location}','${e.desc}','${e.route}')">
+    <h3>${e.title}</h3><p>地點：${e.location}</p>
+  </div>`;
+  if(e.region==="北海道") hokkaido.innerHTML+=card;
+  if(e.region==="本洲") honshu.innerHTML+=card;
+  if(e.region==="九州四國") kyushu.innerHTML+=card;
+});
+
+// 點擊活動
+function selectEvent(lat,lng,title,loc,desc,route){
+  map.setView([lat,lng],13);
+  if(marker) map.removeLayer(marker);
+  if(line) map.removeLayer(line);
+
+  marker = L.marker([lat,lng]).addTo(map)
+    .bindPopup(`<b>${title}</b><br>${loc}<br>${desc}<br>${route}`).openPopup();
+
+  line = L.polyline([[lat-0.02,lng-0.02],[lat,lng]],{color:'red'}).addTo(map);
+}
+</script>
 
 </body>
 </html>

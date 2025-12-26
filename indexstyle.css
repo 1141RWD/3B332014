@@ -1,95 +1,174 @@
-body {
+/* ================== 全域設定 ================== */
+* {
   margin: 0;
-  font-family: "Noto Sans TC", Arial, sans-serif;
-  background: #f5f5f5;
-  color: #333;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Segoe UI", "微軟正黑體", sans-serif;
 }
 
+body {
+  background: #f5f7fa;
+  color: #333;
+  line-height: 1.6;
+}
+
+/* ================== Header ================== */
 header {
-  background: linear-gradient(120deg, #d32f2f, #f44336);
+  background: linear-gradient(120deg, #1e90ff, #4facfe);
   color: white;
-  padding: 40px 20px;
   text-align: center;
+  padding: 30px 20px;
 }
 
 header h1 {
-  margin-bottom: 10px;
-  font-size: 2.5rem;
-  letter-spacing: 2px;
+  font-size: 32px;
+  margin-bottom: 8px;
 }
 
 header p {
-  font-size: 1.1rem;
+  font-size: 16px;
   opacity: 0.9;
 }
+/* ================== 管理者按鈕 =================*/
+.login-btn {
+  position: fixed;
+  top: 15px;
+  right: 20px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 2px solid white;
+  background: rgba(255, 255, 255, 0.1); /* 半透明白 */
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.3s;
+}
 
-/* 導覽列 */
+.login-btn:hover {
+  background: white;
+  color: #1976d2; /* 深藍色文字 */
+  border-color: #1976d2;
+}
+
+.login-box {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: white;
+  padding: 25px;
+  border-radius: 15px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+}
+
+
+/* ================== Navbar ================== */
 .navbar {
-  background: #fff;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-  position: sticky;
-  top: 0;
-  z-index: 1000;
+  background: white;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }
 
 .navbar ul {
-  list-style: none;
-  margin: 0;
-  padding: 0;
   display: flex;
   justify-content: center;
+  list-style: none;
 }
 
 .navbar li {
   padding: 15px 25px;
   cursor: pointer;
-  font-weight: bold;
-  color: #d32f2f;
-  transition: background 0.3s, color 0.3s;
+  font-weight: 500;
 }
 
 .navbar li:hover {
-  background: #d32f2f;
+  background: #1e90ff;
   color: white;
 }
 
+/* ================== 主容器 ================== */
 .container {
-  max-width: 1200px;
+  max-width: 1100px;
+  margin: auto;
+  padding: 20px;
+}
+
+.section-title {
+  font-size: 22px;
+  margin-bottom: 15px;
+  border-left: 5px solid #1e90ff;
+  padding-left: 10px;
+}
+
+/* ================== 地圖 ================== */
+.map-area {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+/* ================== 活動區 ================== */
+.event-area {
+  max-width: 1100px;
   margin: 40px auto;
   padding: 0 20px;
 }
 
-.section-title {
-  font-size: 1.6rem;
-  margin-bottom: 20px;
-  border-left: 6px solid #d32f2f;
-  padding-left: 10px;
+.region-title {
+  font-size: 20px;
+  margin: 25px 0 10px;
+  color: #1e90ff;
 }
 
-.map-area {
+/* ================== 活動卡片 ================== */
+.event-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+}
+
+.event-card {
   background: white;
-  padding: 30px;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  text-align: center;
-}
-
-.map-placeholder {
-  width: 100%;
-  height: 300px;
-  background: #eee;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #777;
-  font-size: 1.2rem;
-}
-
-footer {
-  text-align: center;
+  border-radius: 15px;
   padding: 20px;
-  background: #222;
-  color: #aaa;
-  margin-top: 60px;
+  cursor: pointer;
+  box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.event-card h3 {
+  margin-bottom: 10px;
+  color: #333;
+}
+
+.event-card p {
+  font-size: 14px;
+  color: #666;
+}
+
+/* hover 效果（重點） */
+.event-card:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 12px 25px rgba(30,144,255,0.35);
+}
+
+/* ================== Footer ================== */
+footer {
+  background: #333;
+  color: white;
+  text-align: center;
+  padding: 15px;
+  margin-top: 40px;
+  font-size: 14px;
+}
+
+/* ================== RWD ================== */
+@media (max-width: 768px) {
+  header h1 {
+    font-size: 24px;
+  }
+
+  .navbar li {
+    padding: 12px 15px;
+  }
 }
