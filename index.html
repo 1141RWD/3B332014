@@ -10,54 +10,6 @@
 <!-- Leaflet -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
-<style>
-/* --- 登入按鈕與登入框樣式 --- */
-.login-btn {
-  position: absolute;
-  top: 15px;
-  right: 20px;
-  padding: 10px 20px;
-  background: #1976d2;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  z-index: 1000;
-}
-.login-btn:hover { background: #1565c0; }
-
-.login-box {
-  position: fixed;          /* 改成固定位置，方便置中 */
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%); /* 完全置中 */
-  width: 300px;
-  padding: 20px;
-  background: white;
-  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-  border-radius: 10px;
-  display: none;            /* 預設隱藏 */
-  z-index: 1000;
-}
-.login-box input {
-  width: 100%;
-  padding: 8px;
-  margin: 5px 0;
-  border-radius: 5px;
-  border: 1px solid #ccc;
-}
-.login-box button {
-  width: 100%;
-  padding: 10px;
-  background: #1976d2;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-}
-.login-box button:hover { background: #1565c0; }
-</style>
 </head>
 
 <body>
@@ -78,10 +30,14 @@
   <button onclick="login()">登入</button>
 </div>
 
-
 <!-- 導覽列 -->
 <nav class="navbar">
   <ul>
+    <!-- 登出會員按鈕 -->
+    <li id="logoutNavBtn" onclick="memberLogout()" style="display:none;">
+      🔒 登出會員
+    </li>
+
     <li onclick="goTo('index.html')">首頁</li>
     <li onclick="goTo('customs.html')">入境注意</li>
     <li onclick="goTo('internal.html')">國內注意</li>
@@ -100,6 +56,22 @@
 
 <section class="event-area">
   <div class="section-title">推薦活動</div>
+  <div class="filter-bar">
+    <input
+      type="text"
+      id="searchInput"
+      placeholder="🔍 搜尋活動或地點"
+      oninput="renderEvents()"
+    >
+
+    <select id="regionFilter" onchange="renderEvents()">
+      <option value="全部">全部地區</option>
+      <option value="北海道">北海道</option>
+      <option value="本洲">本洲</option>
+      <option value="九州四國">九州・四國</option>
+    </select>
+  </div>
+
   <h2 class="region-title">📍 北海道</h2>
   <div class="event-list" id="hokkaido"></div>
   <h2 class="region-title">📍 本洲</h2>
@@ -108,12 +80,53 @@
   <div class="event-list" id="kyushu"></div>
 </section>
 
+<!-- ===== 路線規劃 UI ===== -->
+<div class="route-ui">
+  <!-- 按鈕：規劃我的旅遊路線 -->
+  <button class="route-btn" onclick="openRoutePlanner()">
+    🧭 規劃我的旅遊路線
+  </button>
+
+  <!-- Panel：自訂旅遊路線 -->
+  <div class="route-panel" id="routePanel">
+    <h3>🧭 自訂旅遊路線</h3>
+    <p>點擊地圖加入路線節點</p>
+    <button onclick="clearRoute()">🗑 清除路線</button>
+    <span id="routeCount">目前節點：0</span>
+  </div>
+
+  
+</div>
+
+<!-- ===== 會員登入 Modal ===== -->
+<div id="memberLoginModal" class="modal" onclick="closeMemberLogin(event)">
+  <div class="modal-content">
+    <span class="close-btn" onclick="closeMemberLogin(event)">×</span>
+    <h3>會員登入</h3>
+    <input id="memberUser" placeholder="會員帳號"><br>
+    <input id="memberPass" type="password" placeholder="密碼"><br><br>
+    <button onclick="memberLogin()">登入</button>
+  </div>
+</div>
+
+<!-- ===== 活動 Modal ===== -->
+<div id="eventModal" class="modal" onclick="closeModal(event)">
+  <div class="modal-content">
+    <span class="close-btn" onclick="closeModal(event)">×</span>
+    <img id="modalImg">
+    <h2 id="modalTitle"></h2>
+    <p id="modalLocation"></p>
+    <p id="modalDesc"></p>
+    <p id="modalRoute"></p>
+  </div>
+</div>
+
 <footer>
   © 2025 JapanGo｜前端互動專題
 </footer>
 
 <script>
-// --- 管理者登入 JS ---
+// --- 管理者登入 ---
 function openLogin() {
   const box = document.getElementById("loginBox");
   box.style.display = (box.style.display === "block") ? "none" : "block";
@@ -122,7 +135,6 @@ function openLogin() {
 function login() {
   const user = document.getElementById("adminUser").value;
   const pass = document.getElementById("adminPass").value;
-
   if(user === "admin" && pass === "1234"){
     localStorage.setItem("admin","true");
     alert("登入成功，進入管理模式");
@@ -132,43 +144,210 @@ function login() {
   }
 }
 
-// --- 導覽列 ---
+// ===== 會員登入 / 登出 / 路線規劃 =====
+function openRoutePlanner() {
+  const isLogin = localStorage.getItem("memberLogin") === "true";
+  const panel = document.getElementById("routePanel");
+  const btn = document.querySelector(".route-btn");
+  const logoutBtn = document.getElementById("logoutBtn");
+
+  if (!isLogin) {
+    document.getElementById("memberLoginModal").style.display = "flex";
+    return;
+  }
+
+  if (panel) panel.style.display = "block";
+  if (btn) btn.style.display = "none";
+  if (logoutBtn) logoutBtn.style.display = "inline-block";
+}
+
+function memberLogin() {
+  const user = document.getElementById("memberUser").value;
+  const pass = document.getElementById("memberPass").value;
+
+  if (user === "user" && pass === "1234") {
+    localStorage.setItem("memberLogin", "true");
+    alert("會員登入成功！");
+    document.getElementById("memberLoginModal").style.display = "none";
+    openRoutePlanner();
+  } else {
+    alert("會員帳號或密碼錯誤");
+  }
+}
+
+function updateRouteUI() {
+  const isLogin = localStorage.getItem("memberLogin") === "true";
+
+  const btn = document.querySelector(".route-btn");
+  const panel = document.getElementById("routePanel");
+  const logoutBtn = document.getElementById("logoutNavBtn");
+
+  if (isLogin) {
+    if (btn) btn.style.display = "none";
+    if (panel) panel.style.display = "block";
+    if (logoutBtn) logoutBtn.style.display = "inline-block";
+  } else {
+    if (btn) btn.style.display = "block";
+    if (panel) panel.style.display = "none";
+    if (logoutBtn) logoutBtn.style.display = "none";
+  }
+}
+
+function memberLogout() {
+  localStorage.removeItem("memberLogin");
+  alert("已登出會員");
+
+  const panel = document.getElementById("routePanel");
+  if(panel) panel.style.display = "none";
+
+  const btn = document.querySelector(".route-btn");
+  if(btn) btn.style.display = "block";
+
+  const logoutBtn = document.getElementById("logoutNavBtn");
+  if(logoutBtn) logoutBtn.style.display = "none";
+
+  clearRoute();
+}
+
+function closeMemberLogin(e) {
+  if(e.target.id === "memberLoginModal" || e.target.classList.contains("close-btn")) {
+    document.getElementById("memberLoginModal").style.display = "none";
+  }
+}
+
+// ===== 頁面載入時檢查會員登入狀態 =====
+window.onload = function() {
+  const isLogin = localStorage.getItem("memberLogin") === "true";
+  const panel = document.getElementById("routePanel");
+  const btn = document.querySelector(".route-btn");
+  const logoutBtn = document.getElementById("logoutBtn");
+
+  if (isLogin) {
+    if(panel) panel.style.display = "block";
+    if(btn) btn.style.display = "none";
+    if(logoutBtn) logoutBtn.style.display = "inline-block";
+  } else {
+    if(panel) panel.style.display = "none";
+    if(btn) btn.style.display = "block";
+    if(logoutBtn) logoutBtn.style.display = "none";
+  }
+};
+
+// ===== 導覽列 =====
 function goTo(p){ location.href=p; }
 
-// --- 活動假資料與 Leaflet 地圖 ---
+// ===== 活動資料 =====
 const events = [
-  {region:"北海道", title:"札幌雪祭", location:"札幌", lat:43.0618, lng:141.3545, desc:"冬季必看雪雕活動", route:"札幌站 → 大通公園"},
-  {region:"本洲", title:"京都清水寺", location:"京都", lat:35.0116, lng:135.7681, desc:"世界文化遺產", route:"京都站 → 清水寺"},
-  {region:"九州四國", title:"福岡屋台", location:"福岡", lat:33.5902, lng:130.4017, desc:"夜晚屋台美食", route:"博多站 → 中洲"}
+  {region:"北海道", title:"札幌雪祭", location:"札幌", lat:43.0618, lng:141.3545, desc:"冬季必看雪雕活動", route:"札幌站 → 大通公園", img:"imges/札幌雪祭.jpg"},
+  {region:"北海道", title:"小樽運河夜景", location:"小樽", lat:43.1971, lng:140.9947, desc:"復古煤氣燈點亮的浪漫港町", route:"札幌站 → 小樽站 → 運河散策", img:"imges/北海道小樽運河.jpg"},
+  {region:"北海道", title:"旭山動物園", location:"旭川", lat:43.7687, lng:142.3650, desc:"以動物行動展示聞名的超人氣動物園", route:"旭川站 → 旭山動物園", img:"imges/旭山動物園.jpg"},
+  {region:"本洲", title:"東京淺草雷門", location:"東京", lat:35.7148, lng:139.7967, desc:"東京最具代表性的下町文化", route:"淺草站 → 雷門 → 仲見世通", img:"imges/東京淺草雷門.jpg"},
+  {region:"本洲", title:"富士山河口湖", location:"山梨", lat:35.5171, lng:138.7516, desc:"欣賞富士山倒影的最佳景點", route:"新宿 → 河口湖", img:"imges/富士山河口湖.jpg"},
+  {region:"本洲", title:"大阪道頓堀", location:"大阪", lat:34.6687, lng:135.5011, desc:"章魚燒與霓虹燈的美食天堂", route:"難波站 → 道頓堀", img:"imges/大阪道頓堀.jpg"},
+  {region:"本洲", title:"奈良梅花鹿公園", location:"奈良", lat:34.6851, lng:135.8431, desc:"與梅花鹿近距離互動的世界遺產公園", route:"近鐵奈良站 → 奈良公園", img:"imges/奈良梅花鹿公園.jpg"},
+  {region:"本洲", title:"京都清水寺", location:"京都", lat:35.0116, lng:135.7681, desc:"世界文化遺產", route:"京都站 → 清水寺", img:"imges/京都清水寺.jpg"},
+  {region:"九州四國", title:"福岡屋台", location:"福岡", lat:33.5902, lng:130.4017, desc:"夜晚屋台美食", route:"博多站 → 中洲", img:"imges/福岡屋台.jpg"},
+  {region:"九州四國", title:"由布院溫泉", location:"大分", lat:33.2589, lng:131.3083, desc:"充滿文青風格的溫泉小鎮", route:"博多 → 由布院", img:"imges/由布院溫泉.jpg"},
+  {region:"九州四國", title:"長崎原爆資料館", location:"長崎", lat:32.7733, lng:129.8635, desc:"了解歷史、珍惜和平的重要景點", route:"長崎站 → 原爆資料館", img:"imges/長崎原爆資料館.jpg"},
+  {region:"九州四國", title:"高松栗林公園", location:"香川", lat:34.3389, lng:134.0434, desc:"日本三大名園之一的日式庭園", route:"高松站 → 栗林公園", img:"imges/高松栗林公園.jpg"}
 ];
 
+// ===== Leaflet 地圖 =====
 let map = L.map('map').setView([36.2,138.2],5);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{ attribution:'© OpenStreetMap'}).addTo(map);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+  attribution:'© OpenStreetMap'
+}).addTo(map);
 
 let marker, line;
+let routePoints = [];
+let userRouteLine = null;
+let routeMarkers = [];
 
-// 建立活動卡片
-events.forEach(e=>{
-  const card = `<div class="event-card" onclick="selectEvent(${e.lat},${e.lng},'${e.title}','${e.location}','${e.desc}','${e.route}')">
-    <h3>${e.title}</h3><p>地點：${e.location}</p>
-  </div>`;
-  if(e.region==="北海道") hokkaido.innerHTML+=card;
-  if(e.region==="本洲") honshu.innerHTML+=card;
-  if(e.region==="九州四國") kyushu.innerHTML+=card;
+map.on("click", function (e) {
+  const { lat, lng } = e.latlng;
+  routePoints.push([lat,lng]);
+
+  const m = L.circleMarker([lat, lng], {
+    radius: 6, color: "#1976d2", fillColor: "#1976d2", fillOpacity: 1
+  }).addTo(map);
+
+  routeMarkers.push(m);
+  drawUserRoute();
+  document.getElementById("routeCount").innerText = "目前節點：" + routePoints.length;
 });
 
-// 點擊活動
-function selectEvent(lat,lng,title,loc,desc,route){
+function drawUserRoute() {
+  if(userRouteLine) map.removeLayer(userRouteLine);
+  if(routePoints.length >= 2){
+    userRouteLine = L.polyline(routePoints, { color:"blue", weight:4 }).addTo(map);
+  }
+}
+
+function clearRoute() {
+  if(userRouteLine) { map.removeLayer(userRouteLine); userRouteLine=null; }
+  routeMarkers.forEach(m=>map.removeLayer(m));
+  routeMarkers=[];
+  routePoints=[];
+  document.getElementById("routeCount").innerText="目前節點：0";
+  alert("路線已清空，請重新規劃");
+}
+
+// ===== 活動卡片渲染 =====
+function renderEvents() {
+  const keyword = document.getElementById("searchInput").value.toLowerCase();
+  const region = document.getElementById("regionFilter").value;
+
+  hokkaido.innerHTML = "";
+  honshu.innerHTML = "";
+  kyushu.innerHTML = "";
+
+  events.filter(e => {
+    const matchText = e.title.toLowerCase().includes(keyword) || e.location.toLowerCase().includes(keyword);
+    const matchRegion = region === "全部" || e.region === region;
+    return matchText && matchRegion;
+  }).forEach(e => {
+    const card = `
+      <div class="event-card"
+        onclick="selectEvent(${e.lat},${e.lng},'${e.title}','${e.location}','${e.desc}','${e.route}')">
+        <div class="event-img" style="background-image:url('${e.img || 'images/default.jpg'}')"></div>
+        <div class="event-info">
+          <h3>${e.title}</h3>
+          <p>📍 ${e.location}</p>
+          <p>${e.desc}</p>
+        </div>
+      </div>
+    `;
+    if(e.region==="北海道") hokkaido.innerHTML += card;
+    if(e.region==="本洲") honshu.innerHTML += card;
+    if(e.region==="九州四國") kyushu.innerHTML += card;
+  });
+}
+
+// ===== 點擊活動卡片 =====
+function selectEvent(lat, lng, title, loc, desc, route) {
   map.setView([lat,lng],13);
   if(marker) map.removeLayer(marker);
   if(line) map.removeLayer(line);
 
-  marker = L.marker([lat,lng]).addTo(map)
-    .bindPopup(`<b>${title}</b><br>${loc}<br>${desc}<br>${route}`).openPopup();
+  marker = L.marker([lat,lng]).addTo(map).bindPopup(`<b>${title}</b><br>${loc}`).openPopup();
+  line = L.polyline([[lat-0.03, lng-0.03],[lat,lng]], {color:'red'}).addTo(map);
 
-  line = L.polyline([[lat-0.02,lng-0.02],[lat,lng]],{color:'red'}).addTo(map);
+  document.getElementById("modalImg").src = events.find(e=>e.title===title && e.location===loc).img;
+  document.getElementById("modalTitle").innerText = title;
+  document.getElementById("modalLocation").innerText = "📍 " + loc;
+  document.getElementById("modalDesc").innerText = desc;
+  document.getElementById("modalRoute").innerText = "🚶 路線：" + route;
+  document.getElementById("eventModal").style.display="flex";
 }
-</script>
 
+function closeModal(e) {
+  if(e.target.id==="eventModal" || e.target.classList.contains("close-btn")) {
+    document.getElementById("eventModal").style.display="none";
+  }
+}
+
+// 初次渲染活動卡片
+renderEvents();
+</script>
 </body>
 </html>
