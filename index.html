@@ -1,393 +1,640 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-<meta charset="UTF-8">
-<title>JapanGo｜日本旅遊互動平台</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <title>JapanGo｜日本旅遊互動平台</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="indexstyle.css">
 
-<link rel="stylesheet" href="indexstyle.css">
-
-<!-- Leaflet -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCFBbg5sSHvNKL_Q2tEh3g3sVJtbS6lNmI&callback=initMap&libraries=geometry,places,marker&loading=async" async defer></script>
+    <style>
+        #map { height: 400px; width: 100%; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .modal { display: none; align-items: center; justify-content: center; position: fixed; z-index: 3000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); }
+    </style>
 </head>
 
 <body>
 
 <header>
-  <h1>JapanGo 日本旅遊互動平台</h1>
-  <p>旅遊路線 × 入境知識 × 日文學習 × 小遊戲</p>
+    <h1>JapanGo 日本旅遊互動平台</h1>
+    <p>旅遊路線 × 入境知識 × 日文學習 × 小遊戲</p>
 </header>
 
-<!-- 登入框 -->
 <div class="admin-menu">
-  <div class="main-trigger">👤</div>
-  <div class="menu-items">
-    <button class="route-btn-new" id="mainRouteBtn" onclick="openRoutePlanner()">🧭 規劃路線</button>
-    <button class="login-btn-new" onclick="openLogin()">管理者登入</button>
-    <button id="logoutNavBtn" class="logout-btn-new" onclick="memberLogout()" style="display:none;">🔒 登出會員</button>
-  </div>
+    <div class="main-trigger" id="userTrigger">👤</div>
+    <div class="menu-items">
+        <div id="userInfoBox" class="user-profile" style="display:none;">
+            <span class="welcome-text">歡迎回來</span>
+            <div id="userNameDisplay" class="user-name">訪客</div>
+            <hr class="divider">
+        </div>
+        <button class="route-btn-new" id="mainRouteBtn" onclick="openRoutePlanner()">🧭 規劃路線</button>
+        <button class="history-btn-new" onclick="toggleHistoryList()">📜 我的歷史紀錄</button>
+        <div id="historyContainer" class="history-dropdown-list" style="display:none;">
+            <p style="font-size: 12px; color: #999; text-align: center; padding: 10px;">尚無紀錄</p>
+        </div>
+        <button class="login-btn-new" id="adminLoginBtn" onclick="openLogin()">🔑 管理者登入</button>
+        <button id="logoutNavBtn" class="logout-btn-new" onclick="memberLogout()" style="display:none;">🔒 登出會員</button>
+    </div>
 </div>
 
 <div id="loginBox" class="login-box" style="display:none;">
-  <h3>管理者登入</h3>
-  <input id="adminUser" placeholder="帳號"><br>
-  <input id="adminPass" type="password" placeholder="密碼"><br><br>
-  <button onclick="login()">登入</button>
-  <button onclick="openLogin()" style="background:#ccc; margin-top:5px;">取消</button>
+    <h3>管理者登入</h3>
+    <input id="adminUser" placeholder="帳號"><br>
+    <input id="adminPass" type="password" placeholder="密碼"><br><br>
+    <button onclick="login()">登入</button>
+    <button onclick="openLogin()" style="background:#ccc; margin-top:5px;">取消</button>
 </div>
 
-<!-- 導覽列 -->
 <nav class="navbar">
-  <ul>
-    <!-- 登出會員按鈕 -->
-    <li onclick="goTo('index.html')">首頁</li>
-    <li onclick="goTo('customs.html')">入境注意</li>
-    <li onclick="goTo('internal.html')">國內注意</li>
-    <li onclick="goTo('Entryquiz.html')">入境 Q&A</li>
-    <li onclick="goTo('quiz.html')">國內 Q&A</li>
-    <li onclick="goTo('japanese.html')">日文學習</li>
-  </ul>
+    <ul>
+        <li onclick="goTo('index.html')">首頁</li>
+        <li onclick="goTo('customs.html')">入境注意</li>
+        <li onclick="goTo('internal.html')">國內注意</li>
+        <li onclick="goTo('Entryquiz.html')">入境 Q&A</li>
+        <li onclick="goTo('quiz.html')">國內 Q&A</li>
+        <li onclick="goTo('japanese.html')">日文學習</li>
+    </ul>
 </nav>
 
 <div class="container">
-  <section class="map-area">
-    <div class="section-title">日本旅遊地圖</div>
-    <div id="map" style="height:300px;"></div>
-  </section>
+    <section class="map-area">
+        <div class="section-title">日本旅遊地圖 (Google Maps 官方圖資)</div>
+        <div id="map"></div>
+    </section>
 </div>
 
 <section class="event-area">
-  <div class="section-title">推薦活動</div>
-  <div class="filter-bar">
-    <input
-      type="text"
-      id="searchInput"
-      placeholder="🔍 搜尋活動或地點"
-      oninput="renderEvents()"
-    >
+    <div class="section-title">推薦活動</div>
+    <div class="filter-bar">
+        <input type="text" id="searchInput" placeholder="🔍 搜尋活動或地點" oninput="renderEvents()">
+        <select id="regionFilter" onchange="renderEvents()">
+            <option value="全部">全部地區</option>
+            <option value="北海道">北海道</option>
+            <option value="本州">本州</option>
+            <option value="九州四國">九州・四國</option>
+        </select>
+    </div>
 
-    <select id="regionFilter" onchange="renderEvents()">
-      <option value="全部">全部地區</option>
-      <option value="北海道">北海道</option>
-      <option value="本洲">本州</option>
-      <option value="九州四國">九州・四國</option>
-    </select>
-  </div>
-
-  <h2 class="region-title">📍 北海道</h2>
-  <div class="event-list" id="hokkaido"></div>
-  <h2 class="region-title">📍 本州</h2>
-  <div class="event-list" id="honshu"></div>
-  <h2 class="region-title">📍 九州・四國</h2>
-  <div class="event-list" id="kyushu"></div>
+    <h2 class="region-title">📍 北海道</h2>
+    <div class="event-list" id="hokkaido"></div>
+    <h2 class="region-title">📍 本州</h2>
+    <div class="event-list" id="honshu"></div>
+    <h2 class="region-title">📍 九州・四國</h2>
+    <div class="event-list" id="kyushu"></div>
 </section>
 
-<!-- ===== 路線規劃 UI ===== -->
-<div class="route-ui">
-  
+<div id="sideRoutePanel" class="side-panel">
+    <div class="side-panel-header">
+        <h2>🧭 旅遊行程規劃</h2>
+        <span class="close-side-btn" onclick="closeRoutePlanner()">×</span>
+    </div>
+    
+    <div class="side-panel-content">
+        <div class="route-section-first">
+            <label class="input-label">📍 第一步：設定起點</label>
+            <input type="text" id="startPointInput" placeholder="搜尋飯店或車站..." 
+                  style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px;">
+        </div>
 
-  <!-- Panel：自訂旅遊路線 -->
-  <div class="route-panel" id="routePanel">
-    <h3>🧭 自訂旅遊路線</h3>
-    <p>點擊地圖加入路線節點</p>
-    <button onclick="clearRoute()">🗑 清除路線</button>
-    <span id="routeCount">目前節點：0</span>
-  </div>
 
-  
+        <hr style="opacity: 0.3;">
+
+        <div class="route-section-second">
+            <label class="input-label" style="margin-top:10px;">🚩 第二步：行程清單</label>
+            <div id="itineraryList" class="itinerary-list">
+                <p id="emptyHint" class="empty-text">點擊下方活動卡片加入景點...</p>
+            </div>
+        </div>
+        <hr style="opacity: 0.3;">
+
+        <div class="side-panel-footer">
+            <button class="footer-btn clear" onclick="clearItinerary()">清空</button>
+            <button class="footer-btn save" onclick="saveCustomerRecord()">儲存紀錄</button>
+            <button class="footer-btn save" onclick="exportItinerary()">匯出文檔</button>
+        </div>
+    </div>
+
+    <div class="side-panel-footer">
+
+     </div>
 </div>
 
-<!-- ===== 會員登入 Modal ===== -->
 <div id="memberLoginModal" class="modal" onclick="closeMemberLogin(event)">
-  <div class="modal-content">
-    <span class="close-btn" onclick="closeMemberLogin(event)">×</span>
-    <h3>會員登入</h3>
-    <input id="memberUser" placeholder="會員帳號"><br>
-    <input id="memberPass" type="password" placeholder="密碼"><br><br>
-    <button onclick="memberLogin()">登入</button>
-  </div>
+    <div class="modal-content auth-card">
+        <span class="close-btn" onclick="closeMemberLogin(event)">×</span>
+        
+        <div id="loginSection">
+            <h2 class="auth-title">會員登入</h2>
+            <div class="input-group"><input id="memberUser" type="text" required><label>帳號</label></div>
+            <div class="input-group"><input id="memberPass" type="password" required><label>密碼</label></div>
+            <button class="auth-btn primary" onclick="memberLogin()">立即登入</button>
+            <p class="auth-footer">還沒有帳號？ <a href="javascript:void(0)" onclick="toggleAuth('reg')">立即註冊</a></p>
+        </div>
+
+        <div id="registerSection" style="display:none;">
+            <h2 class="auth-title">加入會員</h2>
+            <div class="input-group"><input id="regUser" type="text" required><label>帳號 (ID)</label></div>
+            <div class="input-group"><input id="regRealName" type="text" required><label>使用者姓名</label></div>
+            <div class="input-group"><input id="regPhone" type="tel" required><label>電話號碼</label></div>
+            <div class="input-group"><input id="regEmail" type="email" required><label>Email</label></div>
+            <div class="input-group"><input id="regPass" type="password" required><label>設定密碼</label></div>
+            <div class="input-group"><input id="regPassConfirm" type="password" required><label>確認密碼</label></div>
+            <button class="auth-btn secondary" onclick="memberRegister()">完成註冊</button>
+            <p class="auth-footer">已有帳號？ <a href="javascript:void(0)" onclick="toggleAuth('login')">返回登入</a></p>
+        </div>
+    </div>
 </div>
 
-<!-- ===== 活動 Modal ===== -->
 <div id="eventModal" class="modal" onclick="closeModal(event)">
-  <div class="modal-content">
-    <span class="close-btn" onclick="closeModal(event)">×</span>
-    <img id="modalImg">
-    <h2 id="modalTitle"></h2>
-    <p id="modalLocation"></p>
-    <p id="modalDesc"></p>
-    <p id="modalRoute"></p>
-  </div>
+    <div class="modal-content">
+        <span class="close-btn" onclick="closeModal(event)">×</span>
+        <img id="modalImg" style="width:100%; border-radius:10px; margin-bottom:15px;">
+        <h2 id="modalTitle"></h2>
+        <p id="modalLocation" style="font-weight:bold; color:#1e90ff;"></p>
+        <p id="modalDesc" style="line-height:1.6;"></p>
+        <p id="modalRoute" style="background:#f0f0f0; padding:12px; border-radius:8px; font-size:14px; margin-top:10px;"></p>
+    </div>
 </div>
 
-<footer>
-  © 2025 JapanGo｜前端互動專題
-</footer>
+<footer>© 2025 JapanGo｜前端互動專題</footer>
 
 <script>
-// --- 管理者登入 ---
-function openLogin() {
-  const box = document.getElementById("loginBox");
-  // 讓登入框在 顯示(block) 與 隱藏(none) 之間切換
-  if (box.style.display === "none" || box.style.display === "") {
-    box.style.display = "block";
-  } else {
-    box.style.display = "none";
-  }
+// --- 全域變數 ---
+let map, gMarker = null, gRouteLine = null;
+let gRouteMarkers = []; // 存儲地圖上的數字標記
+let gRoutePoints = [];  // 存儲行程清單 {pos, name}
+
+// 預設活動
+const defaultEvents = [
+    {region:"北海道", title:"札幌雪祭", location:"札幌", lat:43.0618, lng:141.3545, desc:"冬季必看雪雕活動", route:"札幌站 → 大通公園", img:"imges/札幌雪祭.jpg"},
+    {region:"本州", title:"東京淺草雷門", location:"東京", lat:35.7148, lng:139.7967, desc:"東京下町文化", route:"淺草站 → 雷門", img:"imges/東京淺草雷門.jpg"},
+    {region:"九州四國", title:"福岡屋台", location:"福岡", lat:33.5902, lng:130.4017, desc:"夜晚屋台美食", route:"博多站 → 中洲", img:"imges/福岡屋台.jpg"}
+];
+let events = JSON.parse(localStorage.getItem("events")) || defaultEvents;
+
+// --- 1. 初始化 Google Maps ---
+async function initMap() {
+    
+    // 1. 初始化地圖
+    const center = { lat: 36.2048, lng: 138.2529 };
+    map = new google.maps.Map(document.getElementById("map"), {
+        zoom: 5,
+        center: center,
+        mapId: "DEMO_MAP_ID", 
+        mapTypeControl: false,
+        streetViewControl: true
+    });
+
+    // 2. 啟動搜尋起點功能 (Autocomplete)
+    const input = document.getElementById("startPointInput");
+    const autocomplete = new google.maps.places.Autocomplete(input, {
+        componentRestrictions: { country: "jp" }, // 限制在日本搜尋
+        fields: ["geometry", "name"]
+    });
+
+    // 3. 監聽選取事件：當使用者點選下拉選單中的地點時
+    autocomplete.addListener("place_changed", () => {
+        const place = autocomplete.getPlace();
+
+        if (!place.geometry || !place.geometry.location) {
+            alert("請從下拉選單中選擇正確的地點！");
+            return;
+        }
+
+        // 取得地點的座標與名稱
+        const lat = place.geometry.location.lat();
+        const lng = place.geometry.location.lng();
+        const name = "🏠 " + place.name;
+
+        // 觸發加入行程功能 (它會幫你畫出編號 1 標記)
+        addStopToItinerary(lat, lng, name);
+
+        // 選完後清空文字，方便規劃下一站
+        input.value = "";
+    });
+
+    renderEvents();
+    updateUI();
 }
 
-function login() {
-  const user = document.getElementById("adminUser").value;
-  const pass = document.getElementById("adminPass").value;
-  if(user === "admin" && pass === "1234"){
-    localStorage.setItem("admin","true");
-    alert("登入成功，進入管理模式");
-    window.location.href = "admin.html";
-  } else {
-    alert("帳號或密碼錯誤");
-  }
+// --- 2. 行程規劃核心邏輯 ---
+// 加入站點（從搜尋或點擊卡片觸發）
+async function addStopToItinerary(lat, lng, name) {
+    if (localStorage.getItem("memberLogin") !== "true") {
+        alert("請先登入會員！");
+        return;
+    }
+
+    const pos = { lat: Number(lat), lng: Number(lng) };
+    
+    // 將新地點加入行程陣列
+    gRoutePoints.push({ pos, name });
+
+    // 更新左側清單與地圖連線
+    renderItineraryUI(); // 這會更新左邊的 1. 某某飯店
+    drawGRoute();        // 這會在地圖上畫出數字標記和藍線
 }
 
-// ===== 會員登入 / 登出 / 路線規劃 =====
-function openRoutePlanner() {
-  const isLogin = localStorage.getItem("memberLogin") === "true";
-  const panel = document.getElementById("routePanel");
-  const btn = document.querySelector(".route-btn");
-  const logoutBtn = document.getElementById("logoutBtn");
+// 渲染右下角清單 UI
+function renderItineraryUI() {
+    const list = document.getElementById("itineraryList");
+    const hint = document.getElementById("emptyHint");
+    if (!list) return;
 
-  if (!isLogin) {
-    document.getElementById("memberLoginModal").style.display = "flex";
-    return;
-  }
+    if (gRoutePoints.length > 0 && hint) hint.style.display = "none";
+    
+    list.innerHTML = gRoutePoints.map((p, index) => `
+        <div style="display:flex; justify-content:space-between; align-items:center; background:#f0f0f0; margin:5px 0; padding:8px; border-radius:5px; font-size:13px; color:#333;">
+            <span>${index + 1}. ${p.name}</span>
+            <span onclick="removeStop(${index})" style="color:red; cursor:pointer; font-weight:bold; margin-left:10px;">✕</span>
+        </div>
+    `).join('');
+}
 
-  if (panel) panel.style.display = "block";
-  if (btn) btn.style.display = "none";
-  if (logoutBtn) logoutBtn.style.display = "inline-block";
+// 在地圖上畫出帶有編號的標記和連線
+async function drawGRoute() {
+    // 清除舊的
+    if (gRouteLine) gRouteLine.setMap(null);
+    gRouteMarkers.forEach(m => m.map = null);
+    gRouteMarkers = [];
+
+    const { AdvancedMarkerElement, PinElement } = await google.maps.importLibrary("marker");
+
+    // 畫出所有點
+    gRoutePoints.forEach((p, index) => {
+        const pin = new PinElement({
+            glyph: (index + 1).toString(),
+            background: "#1e90ff",
+            borderColor: "white",
+            glyphColor: "white",
+        });
+
+        const m = new AdvancedMarkerElement({
+            position: p.pos,
+            map: map,
+            content: pin.element,
+            title: p.name
+        });
+        gRouteMarkers.push(m);
+    });
+
+    // 畫連線
+    if (gRoutePoints.length >= 2) {
+        const path = gRoutePoints.map(p => p.pos);
+        gRouteLine = new google.maps.Polyline({
+            path: path,
+            strokeColor: "#1e90ff",
+            strokeOpacity: 0.8,
+            strokeWeight: 4,
+            map: map
+        });
+    }
+    
+    const countEl = document.getElementById("routeCount");
+    if (countEl) countEl.innerText = "目前節點：" + gRoutePoints.length;
+}
+
+// 移除單一站點
+function removeStop(index) {
+    gRoutePoints.splice(index, 1);
+    renderItineraryUI();
+    drawGRoute();
+}
+
+// 清空全部
+function clearRoute() {
+    gRoutePoints = [];
+    renderItineraryUI();
+    drawGRoute();
+    if (document.getElementById("emptyHint")) document.getElementById("emptyHint").style.display = "block";
+}
+
+// --- 3. 原有的卡片與會員邏輯 (已整合新功能) ---
+
+async function selectEvent(lat, lng, title, loc, desc, route, img) {
+    const pos = { lat: Number(lat), lng: Number(lng) };
+    map.setCenter(pos);
+    map.setZoom(15);
+
+    if (gMarker) gMarker.map = null;
+    const { AdvancedMarkerElement } = await google.maps.importLibrary("marker");
+    gMarker = new AdvancedMarkerElement({ map: map, position: pos, title: title });
+
+    document.getElementById("modalImg").src = img;
+    document.getElementById("modalTitle").innerText = title;
+    document.getElementById("modalLocation").innerText = "📍 " + loc;
+    document.getElementById("modalDesc").innerText = desc;
+    
+    // 在 Modal 加入一個按鈕來「加入行程」
+    document.getElementById("modalRoute").innerHTML = `
+        <p>🚶 推薦路線：${route}</p>
+        <button onclick="addStopToItinerary(${lat}, ${lng}, '${title}')" 
+                style="background:#4caf50; color:white; border:none; padding:8px 15px; border-radius:5px; cursor:pointer; width:100%; font-weight:bold; margin-top:10px;">
+            ➕ 加入我的行程清單
+        </button>
+    `;
+    document.getElementById("eventModal").style.display = "flex";
+}
+
+function toggleAuth(mode) {
+    document.getElementById("loginSection").style.display = (mode === 'reg' ? "none" : "block");
+    document.getElementById("registerSection").style.display = (mode === 'reg' ? "block" : "none");
+}
+
+function memberRegister() {
+    const user = document.getElementById("regUser").value.trim();
+    const name = document.getElementById("regRealName").value.trim();
+    const email = document.getElementById("regEmail").value.trim(); // 👈 1. 補上這行
+    const pass = document.getElementById("regPass").value.trim();
+    const passConfirm = document.getElementById("regPassConfirm").value.trim();
+
+    // 2. 檢查欄位時也要檢查 email 是否有填
+    if (!user || !name || !email || pass !== passConfirm) { 
+        alert("請填寫所有欄位並確認密碼一致！"); 
+        return; 
+    }
+
+    let users = JSON.parse(localStorage.getItem("memberUsers")) || [];
+    
+    // 3. 檢查帳號是否重複 (進階建議)
+    if (users.find(u => u.username === user)) {
+        alert("此帳號已被註冊！");
+        return;
+    }
+
+    // 4. 將 email 存入物件中
+    users.push({ 
+        username: user, 
+        realName: name, 
+        email: email, // 👈 這裡一定要存進去
+        password: pass 
+    });
+
+    localStorage.setItem("memberUsers", JSON.stringify(users));
+    alert("註冊成功！請登入。");
+    toggleAuth('login');
 }
 
 function memberLogin() {
-  const user = document.getElementById("memberUser").value;
-  const pass = document.getElementById("memberPass").value;
-
-  if (user === "user" && pass === "1234") {
-    localStorage.setItem("memberLogin", "true");
-    alert("會員登入成功！");
-    document.getElementById("memberLoginModal").style.display = "none";
-    openRoutePlanner();
-  } else {
-    alert("會員帳號或密碼錯誤");
-  }
-}
-
-function updateRouteUI() {
-  const isLogin = localStorage.getItem("memberLogin") === "true";
-  const panel = document.getElementById("routePanel");
-  const btn = document.querySelector(".route-btn");
-  const logoutBtn = document.getElementById("logoutNavBtn"); // 確保 ID 正確
-
-  if (isLogin) {
-    if (panel) panel.style.display = "block";
-    if (btn) btn.style.display = "none";
-    if (logoutBtn) logoutBtn.style.display = "inline-block"; // 顯示登出按鈕
-  } else {
-    if (panel) panel.style.display = "none";
-    if (btn) btn.style.display = "block";
-    if (logoutBtn) logoutBtn.style.display = "none"; // 隱藏登出按鈕
-  }
+    const user = document.getElementById("memberUser").value.trim();
+    const pass = document.getElementById("memberPass").value.trim();
+    const savedUsers = JSON.parse(localStorage.getItem("memberUsers")) || [];
+    
+    // 尋找匹配的用戶
+    const found = savedUsers.find(u => u.username === user && u.password === pass);
+    
+    if (found) {
+        localStorage.setItem("memberLogin", "true");
+        localStorage.setItem("currentUserName", found.realName);
+        localStorage.setItem("currentUserEmail", found.email); // 👈 關鍵：存入信箱
+        location.reload();
+    } else { 
+        alert("帳號或密碼錯誤！"); 
+    }
 }
 
 function updateUI() {
-  const isMemberLogin = localStorage.getItem("memberLogin") === "true";
-  const isAdminLogin = localStorage.getItem("admin") === "true"; // 新增這行偵測管理者
-  
-  const routeBtn = document.getElementById("mainRouteBtn");
-  const routePanel = document.getElementById("routePanel");
-  const logoutBtn = document.getElementById("logoutNavBtn");
-  const adminEntryBtn = document.querySelector(".login-btn-new"); // 管理者登入按鈕
-
-  // --- 會員邏輯 ---
-  if (isMemberLogin) {
-    if (routeBtn) routeBtn.style.display = "none";
-    if (routePanel) routePanel.style.display = "block";
-    if (logoutBtn) logoutBtn.style.display = "block";
-  } else {
-    if (routeBtn) routeBtn.style.display = "block";
-    if (routePanel) routePanel.style.display = "none";
-    if (logoutBtn) logoutBtn.style.display = "none";
-  }
-
-  // --- 管理者邏輯：如果已經是管理者登入狀態，把按鈕文字改成「進入管理模式」 ---
-  if (isAdminLogin && adminEntryBtn) {
-    adminEntryBtn.innerText = "🛠 進入管理模式";
-    adminEntryBtn.onclick = function() { window.location.href = "admin.html"; };
-  } else if (adminEntryBtn) {
-    adminEntryBtn.innerText = "🔑 管理者登入";
-    adminEntryBtn.onclick = openLogin;
-  }
+   const isLogin = localStorage.getItem("memberLogin") === "true";
+    const infoBox = document.getElementById("userInfoBox");
+    if (infoBox) infoBox.style.display = isLogin ? "block" : "none";
+    
+    if (isLogin) {
+        document.getElementById("userNameDisplay").innerText = localStorage.getItem("currentUserName");
+        // 登入後，「規劃路線」按鈕應該維持顯示，讓使用者隨時點開左側欄
+        document.getElementById("mainRouteBtn").style.display = "block"; 
+    }
+    
+    document.getElementById("userTrigger").style.background = isLogin ? "#4caf50" : "#1e90ff";
+    document.getElementById("logoutNavBtn").style.display = isLogin ? "block" : "none";
 }
-
-// 確保在這些時機點都會更新 UI
-window.addEventListener('load', updateUI);
-
-
-window.onload = updateUI;
 
 function memberLogout() {
-  localStorage.removeItem("memberLogin");
-  alert("已登出會員");
-
-  const panel = document.getElementById("routePanel");
-  if(panel) panel.style.display = "none";
-
-  const btn = document.querySelector(".route-btn");
-  if(btn) btn.style.display = "block";
-
-  const logoutBtn = document.getElementById("logoutNavBtn");
-  if(logoutBtn) logoutBtn.style.display = "none";
-
-  clearRoute();
+    localStorage.removeItem("memberLogin");
+    localStorage.removeItem("currentUserName");
+    location.reload();
 }
 
-function closeMemberLogin(e) {
-  if(e.target.id === "memberLoginModal" || e.target.classList.contains("close-btn")) {
-    document.getElementById("memberLoginModal").style.display = "none";
-  }
-}
-
-// ===== 導覽列 =====
-function goTo(p){ location.href=p; }
-
-// ===== 活動資料 =====
-const defaultEvents = [
-  {region:"北海道", title:"札幌雪祭", location:"札幌", lat:43.0618, lng:141.3545, desc:"冬季必看雪雕活動", route:"札幌站 → 大通公園", img:"imges/札幌雪祭.jpg"},
-  {region:"北海道", title:"小樽運河夜景", location:"小樽", lat:43.1971, lng:140.9947, desc:"復古煤氣燈點亮的浪漫港町", route:"札幌站 → 小樽站 → 運河散策", img:"imges/北海道小樽運河.jpg"},
-  {region:"北海道", title:"旭山動物園", location:"旭川", lat:43.7687, lng:142.3650, desc:"以動物行動展示聞名的超人氣動物園", route:"旭川站 → 旭山動物園", img:"imges/旭山動物園.jpg"},
-  {region:"本州", title:"東京淺草雷門", location:"東京", lat:35.7148, lng:139.7967, desc:"東京最具代表性的下町文化", route:"淺草站 → 雷門 → 仲見世通", img:"imges/東京淺草雷門.jpg"},
-  {region:"本州", title:"富士山河口湖", location:"山梨", lat:35.5171, lng:138.7516, desc:"欣賞富士山倒影的最佳景點", route:"新宿 → 河口湖", img:"imges/富士山河口湖.jpg"},
-  {region:"本州", title:"大阪道頓堀", location:"大阪", lat:34.6687, lng:135.5011, desc:"章魚燒與霓虹燈的美食天堂", route:"難波站 → 道頓堀", img:"imges/大阪道頓堀.jpg"},
-  {region:"本州", title:"奈良梅花鹿公園", location:"奈良", lat:34.6851, lng:135.8431, desc:"與梅花鹿近距離互動的世界遺產公園", route:"近鐵奈良站 → 奈良公園", img:"imges/奈良梅花鹿公園.jpg"},
-  {region:"本州", title:"京都清水寺", location:"京都", lat:35.0116, lng:135.7681, desc:"世界文化遺產", route:"京都站 → 清水寺", img:"imges/京都清水寺.jpg"},
-  {region:"九州四國", title:"福岡屋台", location:"福岡", lat:33.5902, lng:130.4017, desc:"夜晚屋台美食", route:"博多站 → 中洲", img:"imges/福岡屋台.jpg"},
-  {region:"九州四國", title:"由布院溫泉", location:"大分", lat:33.2589, lng:131.3083, desc:"充滿文青風格的溫泉小鎮", route:"博多 → 由布院", img:"imges/由布院溫泉.jpg"},
-  {region:"九州四國", title:"長崎原爆資料館", location:"長崎", lat:32.7733, lng:129.8635, desc:"了解歷史、珍惜和平的重要景點", route:"長崎站 → 原爆資料館", img:"imges/長崎原爆資料館.jpg"},
-  {region:"九州四國", title:"高松栗林公園", location:"香川", lat:34.3389, lng:134.0434, desc:"日本三大名園之一的日式庭園", route:"高松站 → 栗林公園", img:"imges/高松栗林公園.jpg"}
-];
-let savedData = localStorage.getItem("events");
-let events;
-
-if (!savedData) {
-  // 如果倉庫沒資料，使用預設資料並存入倉庫
-  events = defaultEvents;
-  localStorage.setItem("events", JSON.stringify(defaultEvents));
-} else {
-  // 如果倉庫有資料，讀取最新資料
-  events = JSON.parse(savedData);
-}
-
-// ===== Leaflet 地圖 =====
-let map = L.map('map').setView([36.2,138.2],5);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
-  attribution:'© OpenStreetMap'
-}).addTo(map);
-
-let marker, line;
-let routePoints = [];
-let userRouteLine = null;
-let routeMarkers = [];
-
-map.on("click", function (e) {
-  const { lat, lng } = e.latlng;
-  routePoints.push([lat,lng]);
-
-  const isLogin = localStorage.getItem("memberLogin") === "true";
-  if (!isLogin) {
-    alert("請先登入會員以開始規劃路線！");
-    document.getElementById("memberLoginModal").style.display = "flex";
-    return;
-  }
-
-  const m = L.circleMarker([lat, lng], {
-    radius: 6, color: "#1976d2", fillColor: "#1976d2", fillOpacity: 1
-  }).addTo(map);
-
-  routeMarkers.push(m);
-  drawUserRoute();
-  document.getElementById("routeCount").innerText = "目前節點：" + routePoints.length;
-});
-
-function drawUserRoute() {
-  if(userRouteLine) map.removeLayer(userRouteLine);
-  if(routePoints.length >= 2){
-    userRouteLine = L.polyline(routePoints, { color:"blue", weight:4 }).addTo(map);
-  }
-}
-
-function clearRoute() {
-  if(userRouteLine) { map.removeLayer(userRouteLine); userRouteLine=null; }
-  routeMarkers.forEach(m=>map.removeLayer(m));
-  routeMarkers=[];
-  routePoints=[];
-  document.getElementById("routeCount").innerText="目前節點：0";
-  alert("路線已清空，請重新規劃");
-}
-
-// ===== 活動卡片渲染 =====
 function renderEvents() {
-  const keyword = document.getElementById("searchInput").value.toLowerCase();
-  const region = document.getElementById("regionFilter").value;
-
-  hokkaido.innerHTML = "";
-  honshu.innerHTML = "";
-  kyushu.innerHTML = "";
-
-  events.filter(e => {
-    const matchText = e.title.toLowerCase().includes(keyword) || e.location.toLowerCase().includes(keyword);
-    const matchRegion = region === "全部" || e.region === region;
-    return matchText && matchRegion;
-  }).forEach(e => {
-    const card = `
-      <div class="event-card"
-        onclick="selectEvent(${e.lat},${e.lng},'${e.title}','${e.location}','${e.desc}','${e.route}')">
-        <div class="event-img" style="background-image:url('${e.img || 'images/default.jpg'}')"></div>
-        <div class="event-info">
-          <h3>${e.title}</h3>
-          <p>📍 ${e.location}</p>
-          <p>${e.desc}</p>
-        </div>
-      </div>
-    `;
-    if(e.region==="北海道") hokkaido.innerHTML += card;
-    if(e.region==="本州") honshu.innerHTML += card;
-    if(e.region==="九州四國") kyushu.innerHTML += card;
-  });
+    const keyword = document.getElementById("searchInput").value.toLowerCase();
+    const region = document.getElementById("regionFilter").value;
+    const lists = { "北海道": hokkaido, "本州": honshu, "九州四國": kyushu };
+    Object.values(lists).forEach(el => el.innerHTML = "");
+    events.filter(e => {
+        const mText = e.title.toLowerCase().includes(keyword) || e.location.toLowerCase().includes(keyword);
+        const mRegion = region === "全部" || e.region === region;
+        return mText && mRegion;
+    }).forEach(e => {
+        const card = `
+            <div class="event-card" onclick="selectEvent(${e.lat},${e.lng},'${e.title}','${e.location}','${e.desc}','${e.route}','${e.img}')">
+                <div class="event-img" style="background-image:url('${e.img || 'images/default.jpg'}')"></div>
+                <div class="event-info"><h3>${e.title}</h3><p>📍 ${e.location}</p></div>
+            </div>`;
+        if (lists[e.region]) lists[e.region].innerHTML += card;
+    });
 }
 
-// ===== 點擊活動卡片 =====
-function selectEvent(lat, lng, title, loc, desc, route) {
-  map.setView([lat,lng],13);
-  if(marker) map.removeLayer(marker);
-  if(line) map.removeLayer(line);
+function openLogin() { 
+    const b = document.getElementById("loginBox");
+    b.style.display = (b.style.display === "none" ? "block" : "none");
+}
 
-  marker = L.marker([lat,lng]).addTo(map).bindPopup(`<b>${title}</b><br>${loc}`).openPopup();
-  line = L.polyline([[lat-0.03, lng-0.03],[lat,lng]], {color:'red'}).addTo(map);
-
-  document.getElementById("modalImg").src = events.find(e=>e.title===title && e.location===loc).img;
-  document.getElementById("modalTitle").innerText = title;
-  document.getElementById("modalLocation").innerText = "📍 " + loc;
-  document.getElementById("modalDesc").innerText = desc;
-  document.getElementById("modalRoute").innerText = "🚶 路線：" + route;
-  document.getElementById("eventModal").style.display="flex";
+function login() {
+    if(document.getElementById("adminUser").value==="admin" && document.getElementById("adminPass").value==="1234") {
+        localStorage.setItem("admin","true");
+        window.location.href="admin.html";
+    } else { alert("錯誤"); }
 }
 
 function closeModal(e) {
-  if(e.target.id==="eventModal" || e.target.classList.contains("close-btn")) {
-    document.getElementById("eventModal").style.display="none";
-  }
+    if(e.target.classList.contains("modal") || e.target.classList.contains("close-btn")) {
+        document.getElementById("eventModal").style.display="none";
+        document.getElementById("memberLoginModal").style.display="none";
+    }
 }
 
-// 初次渲染活動卡片
-renderEvents();
+// --- 修改面板開關邏輯 ---
+function openRoutePlanner() {
+    // 檢查登入
+    if (localStorage.getItem("memberLogin") !== "true") {
+        document.getElementById("memberLoginModal").style.display = "flex";
+        return;
+    }
+    // 顯示側邊欄
+    document.getElementById("sideRoutePanel").classList.add("active");
+}
+
+function closeRoutePlanner() {
+    document.getElementById("sideRoutePanel").classList.remove("active");
+}
+
+/* ================== 匯出行程文檔功能 ================== */
+function exportItinerary() {
+    // 1. 抓取資料
+    const userName = localStorage.getItem("currentUserName") || "遊客";
+    const userEmail = localStorage.getItem("currentUserEmail") || "未提供";
+
+    if (typeof gRoutePoints === 'undefined' || gRoutePoints.length === 0) {
+        alert("目前行程清單是空的，無法匯出喔！");
+        return;
+    }
+
+    // 2. 構建文檔內容 (排版美化)
+    let content = `【 JapanGo 旅遊行程規劃文檔 】\r\n`;
+    content += `==========================================\r\n`;
+    content += `規劃者：${userName}\r\n`;
+    content += `聯絡信箱：${userEmail}\r\n`;
+    content += `匯出日期：${new Date().toLocaleString()}\r\n`;
+    content += `==========================================\r\n\r\n`;
+    content += `詳細行程順序：\r\n`;
+
+    gRoutePoints.forEach((point, index) => {
+        const prefix = (index === 0) ? "📍 [起點] " : `🚩 [第 ${index} 站] `;
+        content += `${prefix}${point.name}\r\n`;
+    });
+
+    content += `\r\n==========================================\r\n`;
+    content += `感謝使用 JapanGo，祝您旅途愉快！`;
+
+    // 3. 執行下載動作
+    const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    
+    // 設定檔名，例如：我的日本行程_2024.txt
+    const dateStr = new Date().toISOString().slice(0, 10);
+    a.href = url;
+    a.download = `JapanGo_行程_${userName}_${dateStr}.txt`;
+    
+    // 觸發點擊並移除
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    alert("✅ 行程文檔已生成並開始下載！");
+}
+
+// 清除所有行程功能
+function clearItinerary() {
+    // 1. 彈出確認視窗，避免使用者誤點
+    if (gRoutePoints.length === 0) {
+        alert("目前的行程已經是空的囉！");
+        return;
+    }
+
+    if (!confirm("確定要清空目前規劃的所有行程嗎？此動作無法復原。")) {
+        return;
+    }
+
+    // 2. 清空存儲地點的陣列
+    gRoutePoints = [];
+
+    // 3. 清除地圖上的線條與標記
+    // 假設你的線條變數是 gPolyline
+    if (typeof gPolyline !== 'undefined' && gPolyline) {
+        gPolyline.setMap(null);
+        gPolyline = null;
+    }
+
+    // 4. 清除地圖上的所有數字標記 (Markers)
+    // 假設你用一個陣列 gMarkers 存儲所有標記
+    if (typeof gMarkers !== 'undefined' && gMarkers) {
+        gMarkers.forEach(marker => marker.setMap(null));
+        gMarkers = [];
+    }
+
+    // 5. 重新渲染左側介面 (會顯示「尚未加入景點」的提示)
+    renderItineraryUI();
+
+    // 6. 重置搜尋輸入框
+    const input = document.getElementById("startPointInput");
+    if (input) input.value = "";
+
+    alert("行程已全部清空！");
+}
+
+// 儲存目前行程到本地紀錄
+function saveCustomerRecord() {
+    if (gRoutePoints.length === 0) {
+        alert("目前沒有行程資料可以儲存！");
+        return;
+    }
+
+    const userName = localStorage.getItem("currentUserName") || "訪客";
+    
+    // 建立紀錄物件
+    const record = {
+        user: userName,
+        timestamp: new Date().toLocaleString(),
+        route: gRoutePoints,
+        count: gRoutePoints.length
+    };
+
+    // 取得舊紀錄或建立新陣列
+    let history = JSON.parse(localStorage.getItem("itineraryHistory")) || [];
+    
+    // 將新紀錄推入最前面
+    history.unshift(record);
+
+    // 儲存回 localStorage
+    localStorage.setItem("itineraryHistory", JSON.stringify(history));
+
+    alert(`✅ 已成功儲存 ${userName} 的行程紀錄！`);
+    renderHistoryList(); // 更新顯示歷史紀錄 (如果有的話)
+}
+
+// 切換歷史紀錄清單的顯示/隱藏
+function toggleHistoryList() {
+    const container = document.getElementById("historyContainer");
+    if (container.style.display === "none") {
+        renderHistoryList(); // 展開時順便刷新內容
+        container.style.display = "block";
+    } else {
+        container.style.display = "none";
+    }
+}
+
+// 修改渲染歷史紀錄的邏輯，配合按鈕下方的容器
+function renderHistoryList() {
+    const history = JSON.parse(localStorage.getItem("itineraryHistory")) || [];
+    const container = document.getElementById("historyContainer");
+    
+    if (!container) return;
+
+    if (history.length === 0) {
+        container.innerHTML = `<p style="font-size: 12px; color: #999; text-align: center; padding: 10px;">尚無紀錄</p>`;
+        return;
+    }
+
+    container.innerHTML = history.map((rec, index) => `
+        <div class="history-record-item" onclick="loadHistoryRecord(${index})" style="padding: 10px; border-bottom: 1px solid #eee; cursor: pointer;">
+            <div style="font-size: 11px; font-weight: bold; color: #333;">📅 ${rec.timestamp}</div>
+            <div style="font-size: 11px; color: #1e90ff;">📍 共 ${rec.count} 個地點</div>
+        </div>
+    `).join('');
+}
+
+// 當載入紀錄時，順便把選單關掉，讓畫面清爽
+function loadHistoryRecord(index) {
+    const history = JSON.parse(localStorage.getItem("itineraryHistory")) || [];
+    const record = history[index];
+    if (!record) return;
+
+    gRoutePoints = record.route;
+    renderItineraryUI();
+    drawGRoute();
+
+    // 關閉清單小盒子
+    document.getElementById("historyContainer").style.display = "none";
+    // 打開左側規劃面板
+    document.getElementById("sideRoutePanel").classList.add("active");
+    
+    alert("歷史紀錄載入成功！");
+}
+
+function goTo(p){ location.href=p; }
+function closeMemberLogin(e) { closeModal(e); }
 </script>
 </body>
 </html>

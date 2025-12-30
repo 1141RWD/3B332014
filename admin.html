@@ -1,337 +1,232 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-<meta charset="UTF-8">
-<title>JapanGo｜管理模式</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<style>
-  :root { --primary: #1976d2; --bg: #f0f4f8; }
-  body { font-family:"Noto Sans TC", sans-serif; background: var(--bg); margin:0; color: #333; }
-  header { background: var(--primary); color:white; text-align:center; padding:25px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-  
-  .admin-box { max-width:900px; margin:30px auto; padding:30px; background:white; border-radius:15px; box-shadow:0 10px 25px rgba(0,0,0,0.05);}
-  
-  /* 表單排版優化 */
-  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
-  .form-group { display: flex; flex-direction: column; }
-  .form-group.full { grid-column: span 2; }
-  
-  label { font-size: 14px; font-weight: bold; margin-bottom: 5px; color: #666; }
-  input, select, textarea { padding:12px; border:1px solid #ddd; border-radius:8px; font-size: 14px; }
-  textarea { height: 80px; resize: vertical; }
-
-  button { padding:12px 20px; border:none; border-radius:8px; background: var(--primary); color:white; cursor:pointer; font-weight: bold; transition: 0.3s; }
-  button:hover { background:#1565c0; transform: translateY(-2px); }
-  button.delete { background: #ff4d4f; }
-  button.delete:hover { background: #d9363e; }
-
-  .event-card { padding:20px; margin:15px 0; border-radius:10px; background:#f9fbff; border: 1px solid #e0e6ed; display: flex; justify-content: space-between; align-items: center; }
-  .card-info b { font-size: 18px; color: var(--primary); }
-  
-  .nav-group { position: fixed; top: 20px; right: 20px; display: flex; gap: 10px; }
-</style>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <meta charset="UTF-8">
+    <title>JapanGo 管理系統</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="indexstyle.css">
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCFBbg5sSHvNKL_Q2tEh3g3sVJtbS6lNmI&callback=initAdminMap&libraries=places" async defer></script>
+    
+    <style>
+        body { background: #f4f7f6; padding: 20px; }
+        .admin-container { max-width: 1000px; margin: 0 auto; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
+        #adminMap { height: 300px; width: 100%; border-radius: 10px; margin-bottom: 20px; border: 2px solid #ddd; }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+        .form-group { display: flex; flex-direction: column; }
+        input, select, textarea { padding: 10px; border: 1px solid #ddd; border-radius: 8px; margin-top: 5px; }
+        .btn-group { display: flex; gap: 10px; }
+        button { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        .save-btn { background: #1976d2; color: white; }
+        .clear-btn { background: #999; color: white; }
+        .logout-btn { background: #ff4d4f; color: white; float: right; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 30px; }
+        th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: left; }
+        th { background: #f8f9fa; color: #1976d2; }
+        .delete-link { color: #ff4d4f; cursor: pointer; font-size: 14px; }
+        
+        .tab-group { border-bottom: 2px solid #eee; margin-bottom: 20px; display: flex; gap: 20px; }
+        .tab { padding: 10px 20px; cursor: pointer; border-bottom: 3px solid transparent; }
+        .tab.active { border-bottom: 3px solid #1976d2; color: #1976d2; font-weight: bold; }
+    </style>
 </head>
 <body>
 
-<header><h1>管理模式｜日本活動數據中心</h1></header>
+<div class="admin-container">
+    <button class="logout-btn" onclick="adminLogout()">登出管理系統</button>
+    <h1>JapanGo 後台管理中心</h1>
 
-<div class="nav-group">
-  <button onclick="backHome()">🏠 回首頁</button>
-  <button onclick="adminLogout()" style="background:#666;">🔒 登出管理</button>
-</div>
+    <div class="tab-group">
+        <div class="tab active" onclick="switchTab('eventTab')">景點活動管理</div>
+        <div class="tab" onclick="switchTab('memberTab')">註冊會員名單</div>
+    </div>
 
-<div class="admin-box">
-  <h2>✨ 新增/編輯活動</h2>
-  <div class="form-grid">
-    <div class="form-group">
-      <label>活動名稱</label>
-      <input id="newTitle" placeholder="例如：札幌雪祭">
-    </div>
-    <div class="form-group">
-      <label>地區</label>
-      <select id="newRegion">
-        <option value="北海道">北海道</option>
-        <option value="本州">本州</option>
-        <option value="九州四國">九州・四國</option>
-      </select>
-    </div>
-    <div class="form-group">
-      <label>具體地點</label>
-      <input id="newLocation" placeholder="例如：大通公園">
-    </div>
-    <div class="form-group">
-      <label>圖片路徑</label>
-      <input id="newImg" placeholder="例如：images/snow.jpg">
-    </div>
-    <div class="form-group">
-      <label>緯度 (Lat)</label>
-      <input id="newLat" type="number" step="any" placeholder="43.0618">
-    </div>
-    <div class="form-group">
-      <label>經度 (Lng)</label>
-      <input id="newLng" type="number" step="any" placeholder="141.3545">
-    </div>
-    <div class="form-group full">
-      <label>活動描述</label>
-      <textarea id="newDesc" placeholder="請輸入活動詳細介紹..."></textarea>
-    </div>
-    <div class="form-group full">
-      <label>建議路線</label>
-      <input id="newRoute" placeholder="例如：札幌站 → 步行 10 分鐘">
-    </div>
-  </div>
+    <div id="eventTabContent">
+        <div id="adminMap"></div>
+        <p style="color: #666; font-size: 14px;">💡 提示：在地圖上點擊可自動獲取經緯度</p>
+        
+        <div class="form-grid">
+            <div class="form-group"><label>活動名稱</label><input type="text" id="evTitle"></div>
+            <div class="form-group">
+                <label>所屬地區</label>
+                <select id="evRegion">
+                    <option value="北海道">北海道</option>
+                    <option value="本州">本州</option>
+                    <option value="九州四國">九州・四國</option>
+                </select>
+            </div>
+            <div class="form-group"><label>詳細地點 (📍文字)</label><input type="text" id="evLocation"></div>
+            <div class="form-group"><label>圖片路徑 (imges/xxx.jpg)</label><input type="text" id="evImg"></div>
+            <div class="form-group"><label>緯度 (Lat)</label><input type="text" id="evLat" readonly></div>
+            <div class="form-group"><label>經度 (Lng)</label><input type="text" id="evLng" readonly></div>
+        </div>
+        <div class="form-group" style="margin-bottom: 20px;">
+            <label>活動描述</label>
+            <textarea id="evDesc" rows="3"></textarea>
+        </div>
 
-  <div class="form-group full">
-  <label>搜尋地址轉換座標</label>
-  <div style="display: flex; gap: 5px;">
-    <input id="addressInput" placeholder="例如：東京都台東區淺草2-3-1">
-    <button type="button" onclick="searchAddress()" style="width: 100px;">轉換</button>
-  </div>
-</div>
+        <div class="btn-group">
+            <button class="save-btn" onclick="addEvent()">新增活動景點</button>
+            <button class="clear-btn" onclick="clearForm()">清空欄位</button>
+        </div>
 
-<div class="form-group">
-  <label>緯度 (Lat)</label>
-  <input id="newLat" readonly style="background: #eee;" placeholder="自動填入">
-</div>
-<div class="form-group">
-  <label>經度 (Lng)</label>
-  <input id="newLng" readonly style="background: #eee;" placeholder="自動填入">
-</div>
+        <table>
+            <thead>
+                <tr>
+                    <th>地區</th>
+                    <th>活動名稱</th>
+                    <th>座標</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody id="eventTableBody"></tbody>
+        </table>
+    </div>
 
-  <div class="admin-box">
-  <h2>🧭 管理員實測：路線規劃</h2>
-  <div id="map" style="height: 400px; border-radius: 12px; margin-bottom: 15px;"></div>
-  
-  <div class="route-panel" id="routePanel" style="display: block; position: static; width: 100%; box-shadow: none; border: 1px solid #ddd;">
-    <h3>路線節點</h3>
-    <p>點擊上方地圖模擬規劃路線</p>
-    <button onclick="clearRoute()" style="background: #f39c12;">🗑 清除路線</button>
-    <span id="routeCount">目前節點：0</span>
-  </div>
-</div>
-
-  <button onclick="addEvent()" style="width: 100%; font-size: 16px;">➕ 加入活動資料庫</button>
-
-  <h2 style="margin-top: 40px;">現有活動列表</h2>
-  <div id="eventList"></div>
+    <div id="memberTabContent" style="display:none;">
+        <h3>👥 註冊會員總覽</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>帳號</th>
+                    <th>姓名</th>
+                    <th>電話</th>
+                    <th>Email</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody id="memberTableBody"></tbody>
+        </table>
+    </div>
 </div>
 
 <script>
-// --- 安全檢查 ---
-if(localStorage.getItem("admin") !== "true"){
-  alert("權限不足，請重新登入");
-  window.location.href = "index.html";
+// --- 安全檢查：未登入管理者跳回首頁 ---
+if (localStorage.getItem("admin") !== "true") {
+    alert("請先從首頁登入管理員帳號！");
+    location.href = "index.html";
 }
 
-const defaultEvents = [
-  {region:"北海道", title:"札幌雪祭", location:"札幌", lat:43.0618, lng:141.3545, desc:"冬季必看雪雕活動", route:"札幌站 → 大通公園", img:"imges/札幌雪祭.jpg"},
-  {region:"北海道", title:"小樽運河夜景", location:"小樽", lat:43.1971, lng:140.9947, desc:"復古煤氣燈點亮的浪漫港町", route:"札幌站 → 小樽站 → 運河散策", img:"imges/北海道小樽運河.jpg"},
-  {region:"北海道", title:"旭山動物園", location:"旭川", lat:43.7687, lng:142.3650, desc:"以動物行動展示聞名的超人氣動物園", route:"旭川站 → 旭山動物園", img:"imges/旭山動物園.jpg"},
-  {region:"本州", title:"東京淺草雷門", location:"東京", lat:35.7148, lng:139.7967, desc:"東京最具代表性的下町文化", route:"淺草站 → 雷門 → 仲見世通", img:"imges/東京淺草雷門.jpg"},
-  {region:"本州", title:"富士山河口湖", location:"山梨", lat:35.5171, lng:138.7516, desc:"欣賞富士山倒影的最佳景點", route:"新宿 → 河口湖", img:"imges/富士山河口湖.jpg"},
-  {region:"本州", title:"大阪道頓堀", location:"大阪", lat:34.6687, lng:135.5011, desc:"章魚燒與霓虹燈的美食天堂", route:"難波站 → 道頓堀", img:"imges/大阪道頓堀.jpg"},
-  {region:"本州", title:"奈良梅花鹿公園", location:"奈良", lat:34.6851, lng:135.8431, desc:"與梅花鹿近距離互動的世界遺產公園", route:"近鐵奈良站 → 奈良公園", img:"imges/奈良梅花鹿公園.jpg"},
-  {region:"本州", title:"京都清水寺", location:"京都", lat:35.0116, lng:135.7681, desc:"世界文化遺產", route:"京都站 → 清水寺", img:"imges/京都清水寺.jpg"},
-  {region:"九州四國", title:"福岡屋台", location:"福岡", lat:33.5902, lng:130.4017, desc:"夜晚屋台美食", route:"博多站 → 中洲", img:"imges/福岡屋台.jpg"},
-  {region:"九州四國", title:"由布院溫泉", location:"大分", lat:33.2589, lng:131.3083, desc:"充滿文青風格的溫泉小鎮", route:"博多 → 由布院", img:"imges/由布院溫泉.jpg"},
-  {region:"九州四國", title:"長崎原爆資料館", location:"長崎", lat:32.7733, lng:129.8635, desc:"了解歷史、珍惜和平的重要景點", route:"長崎站 → 原爆資料館", img:"imges/長崎原爆資料館.jpg"},
-  {region:"九州四國", title:"高松栗林公園", location:"香川", lat:34.3389, lng:134.0434, desc:"日本三大名園之一的日式庭園", route:"高松站 → 栗林公園", img:"imges/高松栗林公園.jpg"}
-];
+let adminMap;
+let adminMarker;
 
-// 1. 先從倉庫拿拿看
-let savedData = localStorage.getItem("events");
-let events;
+// --- 1. 初始化管理員地圖 ---
+function initAdminMap() {
+    adminMap = new google.maps.Map(document.getElementById("adminMap"), {
+        center: { lat: 36.2048, lng: 138.2529 },
+        zoom: 5,
+    });
 
-if (!savedData) {
-  // 如果倉庫沒貨，使用預設資料並存入
-  events = [...defaultEvents]; // 使用展開運算子複製一份
-  localStorage.setItem("events", JSON.stringify(events));
-} else {
-  // 如果倉庫有貨，讀取倉庫的貨
-  events = JSON.parse(savedData);
+    // 點擊地圖自動填入經緯度
+    adminMap.addListener("click", (e) => {
+        const lat = e.latLng.lat().toFixed(6);
+        const lng = e.latLng.lng().toFixed(6);
+        document.getElementById("evLat").value = lat;
+        document.getElementById("evLng").value = lng;
+
+        if (adminMarker) adminMarker.setMap(null);
+        adminMarker = new google.maps.Marker({
+            position: e.latLng,
+            map: adminMap,
+            animation: google.maps.Animation.DROP
+        });
+    });
+
+    renderAdminEvents();
+    renderMemberList();
 }
 
-
-let addressMarker = null; // 用來顯示搜尋結果的標記
-
-async function searchAddress() {
-  const address = document.getElementById("addressInput").value;
-  if (!address) {
-    alert("請輸入地址！");
-    return;
-  }
-
-  // 使用 OpenStreetMap 的 Nominatim API
-  const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`;
-
-  try {
-    const response = await fetch(url);
-    const data = await response.json();
-
-    if (data.length > 0) {
-      const result = data[0];
-      const lat = parseFloat(result.lat);
-      const lon = parseFloat(result.lon);
-
-      // 1. 自動填入經緯度欄位
-      document.getElementById("newLat").value = lat;
-      document.getElementById("newLng").value = lon;
-
-      // 2. 地圖跳轉並標記
-      map.setView([lat, lon], 16);
-      
-      if (addressMarker) map.removeLayer(addressMarker);
-      addressMarker = L.marker([lat, lon]).addTo(map)
-        .bindPopup("搜尋結果位置")
-        .openPopup();
-        
-      alert("轉換成功！已自動填入座標並定位地圖。");
+// --- 2. 切換標籤頁 ---
+function switchTab(tabName) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    event.target.classList.add('active');
+    
+    if (tabName === 'eventTab') {
+        document.getElementById('eventTabContent').style.display = 'block';
+        document.getElementById('memberTabContent').style.display = 'none';
     } else {
-      alert("找不到該地址，請嘗試更精確的描述（例如加入：日本...）。");
+        document.getElementById('eventTabContent').style.display = 'none';
+        document.getElementById('memberTabContent').style.display = 'block';
     }
-  } catch (error) {
-    console.error("Geocoding Error:", error);
-    alert("搜尋失敗，請檢查網路連線。");
-  }
 }
 
-function renderEvents(){
-  const list = document.getElementById("eventList");
-  list.innerHTML = "";
-  
-  events.forEach((e, i) => {
-    const card = document.createElement("div");
-    card.className = "event-card";
-    card.innerHTML = `
-      <div class="card-info">
-        <b>${e.title}</b> <span style="color:#888; font-size:12px;">[${e.region}]</span><br>
-        <small>📍 ${e.location} | 🧭 ${e.lat}, ${e.lng}</small>
-      </div>
-      <div class="card-btns">
-        <button onclick="editEvent(${i})">📝 編輯</button>
-        <button class="delete" onclick="deleteEvent(${i})">🗑 刪除</button>
-      </div>
-    `;
-    list.appendChild(card);
-  });
-  
-  // 重要：每次異動都存回 localStorage，首頁重新整理後就會看到新資料
-  localStorage.setItem("events", JSON.stringify(events));
+// --- 3. 景點 CRUD 邏輯 ---
+function addEvent() {
+    const title = document.getElementById("evTitle").value;
+    const region = document.getElementById("evRegion").value;
+    const location = document.getElementById("evLocation").value;
+    const lat = document.getElementById("evLat").value;
+    const lng = document.getElementById("evLng").value;
+    const desc = document.getElementById("evDesc").value;
+    const img = document.getElementById("evImg").value;
+
+    if (!title || !lat || !lng) { alert("請填寫活動名稱並在地圖上選取位置！"); return; }
+
+    let events = JSON.parse(localStorage.getItem("events")) || [];
+    events.push({ region, title, location, lat: parseFloat(lat), lng: parseFloat(lng), desc, img });
+    localStorage.setItem("events", JSON.stringify(events));
+    
+    alert("活動已成功新增！");
+    clearForm();
+    renderAdminEvents();
 }
 
-function addEvent(){
-  const e = {
-    title: document.getElementById("newTitle").value,
-    location: document.getElementById("newLocation").value,
-    lat: parseFloat(document.getElementById("newLat").value),
-    lng: parseFloat(document.getElementById("newLng").value),
-    desc: document.getElementById("newDesc").value,
-    route: document.getElementById("newRoute").value,
-    region: document.getElementById("newRegion").value,
-    img: document.getElementById("newImg").value || "images/default.jpg" // 補上圖片
-  };
+function renderAdminEvents() {
+    let events = JSON.parse(localStorage.getItem("events")) || [];
+    const tbody = document.getElementById("eventTableBody");
+    tbody.innerHTML = events.map((e, index) => `
+        <tr>
+            <td>${e.region}</td>
+            <td>${e.title}</td>
+            <td>${e.lat}, ${e.lng}</td>
+            <td><span class="delete-link" onclick="deleteEvent(${index})">刪除</span></td>
+        </tr>
+    `).join('');
+}
 
-  if(!e.title || !e.lat) { alert("請至少填寫標題與經緯度"); return; }
+function deleteEvent(index) {
+    if (confirm("確定要刪除這個景點嗎？")) {
+        let events = JSON.parse(localStorage.getItem("events")) || [];
+        events.splice(index, 1);
+        localStorage.setItem("events", JSON.stringify(events));
+        renderAdminEvents();
+    }
+}
 
-  events.push(e);
-  renderEvents();
-  clearForm();
+// --- 4. 會員名單邏輯 ---
+function renderMemberList() {
+    let users = JSON.parse(localStorage.getItem("memberUsers")) || [];
+    const tbody = document.getElementById("memberTableBody");
+    tbody.innerHTML = users.map((u, index) => `
+        <tr>
+            <td>${u.username}</td>
+            <td>${u.realName}</td>
+            <td>${u.phone}</td>
+            <td>${u.email}</td>
+            <td><span class="delete-link" onclick="deleteMember(${index})">停權</span></td>
+        </tr>
+    `).join('');
+}
+
+function deleteMember(index) {
+    if (confirm("確定要刪除該會員嗎？這將導致其無法登入。")) {
+        let users = JSON.parse(localStorage.getItem("memberUsers")) || [];
+        users.splice(index, 1);
+        localStorage.setItem("memberUsers", JSON.stringify(users));
+        renderMemberList();
+    }
 }
 
 function clearForm() {
-  const inputs = document.querySelectorAll('.admin-box input, .admin-box textarea');
-  inputs.forEach(input => input.value = "");
-}
-
-function deleteEvent(i){
-  if(confirm("確定要永久刪除此活動嗎？")) {
-    events.splice(i, 1);
-    renderEvents();
-  }
-}
-
-function editEvent(i){
-  const e = events[i];
-  // 這裡簡單示範用 prompt，進階做法可以填回表單後改為「儲存」模式
-  const newTitle = prompt("修改標題", e.title);
-  if(newTitle) {
-    e.title = newTitle;
-    renderEvents();
-  }
-}
-
-function backHome(){
-  window.location.href = "index.html";
+    ["evTitle", "evLocation", "evImg", "evLat", "evLng", "evDesc"].forEach(id => document.getElementById(id).value = "");
 }
 
 function adminLogout() {
-  localStorage.removeItem("admin");
-  alert("已登出管理模式");
-  window.location.href = "index.html";
+    localStorage.removeItem("admin");
+    location.href = "index.html";
 }
 
-// --- 地圖初始化 ---
-let map = L.map('map').setView([36.2, 138.2], 5);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  attribution: '© OpenStreetMap'
-}).addTo(map);
-
-let routePoints = [];
-let userRouteLine = null;
-let routeMarkers = [];
-
-// 在管理頁面點擊地圖不需要檢查會員登入，因為你已經是管理者了
-map.on("click", async function (e) {
-  const { lat, lng } = e.latlng;
-  
-  // 原有的規劃路線邏輯...
-  
-  // 新增：反查地址
-  const reverseUrl = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`;
-  try {
-    const res = await fetch(reverseUrl);
-    const data = await res.json();
-    if (data.display_name) {
-       console.log("偵測到地址：" + data.display_name);
-       // 你可以選擇是否要把這個地址填入 addressInput
-       document.getElementById("addressInput").value = data.display_name;
-       document.getElementById("newLat").value = lat;
-       document.getElementById("newLng").value = lng;
-    }
-  } catch (err) { /* 忽略錯誤 */ }
-});
-
-function drawUserRoute() {
-  if (userRouteLine) map.removeLayer(userRouteLine);
-  if (routePoints.length >= 2) {
-    userRouteLine = L.polyline(routePoints, { color: "orange", weight: 4 }).addTo(map);
-  }
-}
-
-function clearRoute() {
-  if (userRouteLine) { map.removeLayer(userRouteLine); userRouteLine = null; }
-  routeMarkers.forEach(m => map.removeLayer(m));
-  routeMarkers = [];
-  routePoints = [];
-  document.getElementById("routeCount").innerText = "目前節點：0";
-}
-
-function renderMarkersOnAdminMap() {
-  // 先清除舊標記（這裡假設你有一個存放活動標記的陣列）
-  events.forEach(e => {
-    L.marker([e.lat, e.lng])
-      .addTo(map)
-      .bindPopup(`<b>${e.title}</b><br>${e.location}`);
-  });
-}
-
-// 記得在頁面讀取完 events 後執行它
-renderMarkersOnAdminMap();
-
-// 初始渲染
-renderEvents();
+function goTo(p) { location.href = p; }
 </script>
 </body>
 </html>
