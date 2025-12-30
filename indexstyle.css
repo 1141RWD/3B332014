@@ -408,6 +408,103 @@ footer {
    background: #1565c0; 
 }
 
+/* 彈窗核心樣式優化 */
+.auth-card {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  padding: 40px;
+  max-width: 350px;
+  width: 90%;
+  box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+  border: 1px solid rgba(255,255,255,0.3);
+  text-align: center;
+  max-height: 85vh; /* 限制最高為螢幕高度的 85% */
+  overflow-y: auto; /* 內容過長時顯示捲軸 */
+}
+
+/* 隱藏捲軸但保留功能 (選用) */
+.auth-card::-webkit-scrollbar {
+  width: 5px;
+}
+.auth-card::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 10px;
+}
+
+.auth-title {
+  color: #1976d2;
+  margin-bottom: 30px;
+  font-size: 24px;
+}
+
+/* 動態輸入框設計 */
+.input-group {
+  position: relative;
+  margin-bottom: 25px;
+}
+
+.input-group input {
+  width: 100%;
+  padding: 12px 0;
+  font-size: 16px;
+  border: none;
+  border-bottom: 2px solid #ddd;
+  outline: none;
+  background: transparent;
+  transition: 0.3s;
+}
+
+.input-group label {
+  position: absolute;
+  top: 12px;
+  left: 0;
+  color: #999;
+  pointer-events: none;
+  transition: 0.3s;
+}
+
+/* 輸入框聚焦效果 */
+.input-group input:focus ~ label,
+.input-group input:valid ~ label {
+  top: -15px;
+  font-size: 12px;
+  color: #1976d2;
+}
+
+.input-group input:focus {
+  border-bottom: 2px solid #1976d2;
+}
+
+/* 按鈕美化 */
+.auth-btn {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 25px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.3s;
+  margin-top: 10px;
+}
+
+.auth-btn.primary { background: #1976d2; color: white; }
+.auth-btn.secondary { background: #4caf50; color: white; }
+.auth-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+
+.auth-footer {
+  margin-top: 20px;
+  font-size: 14px;
+  color: #666;
+}
+
+.auth-footer a {
+  color: #1976d2;
+  text-decoration: none;
+  font-weight: bold;
+}
+
 .route-panel h3 {
   margin-top: 0;
   color: #1565c0;
@@ -476,18 +573,18 @@ footer {
 }
 
 
-/* 容器定位在右上角 */
+/* 整個懸浮選單容器 */
 .admin-menu {
   position: fixed;
   top: 20px;
   right: 20px;
   z-index: 2000;
   display: flex;
-  flex-direction: column; /* 讓內容往左邊展開 */
-  align-items: flex-end;
+  flex-direction: column;
+  align-items: flex-end; /* 讓選單對齊圓圈按鈕的右側 */
 }
 
-/* 主按鈕（觸發點） */
+/* 主按鈕（觸發點 👤） */
 .main-trigger {
   width: 50px;
   height: 50px;
@@ -501,51 +598,121 @@ footer {
   cursor: pointer;
   box-shadow: 0 4px 10px rgba(0,0,0,0.2);
   transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  z-index: 2001; /* 確保在最上面 */
 }
 
-/* 隱藏選單容器 */
+/* 懸浮選單主體 */
 .menu-items {
+  position: absolute; /* 關鍵：讓它懸浮不影響排版 */
+  top: 60px;          /* 在圓圈按鈕下方 */
+  right: 0;
+  width: 200px;       /* 稍微寬一點更美觀 */
+  padding: 15px;
+  background: white;
+  border-radius: 15px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+  
+  /* 初始狀態：隱藏且稍微往上縮 */
+  opacity: 0;
+  transform: translateY(-20px);
+  pointer-events: none;
+  transition: 0.3s ease-out;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  margin-right: 15px;
-  opacity: 0;
-  transform: translateX(-20px);
-  pointer-events: none; /* 隱藏時不可點擊 */
-  transition: 0.4s cubic-bezier(0.175,0.885,0.32,1.275);
 }
 
-/* 滑鼠移入容器時展開 */
+/* 當滑鼠移入容器時展開 */
 .admin-menu:hover .menu-items {
   opacity: 1;
-  transform: translateX(0);
+  transform: translateY(0);
   pointer-events: auto;
 }
 
 .admin-menu:hover .main-trigger {
-  transform: rotate(360px) scale(1.1);
+  transform: rotate(360deg) scale(1.1); /* 修正：px 改為 deg */
   background: #1565c0;
 }
 
-/* 按鈕樣式統一化 */
-.login-btn-new, .logout-btn-new ,.route-btn-new{
-  padding: 10px 18px;
-  border: none;
-  border-radius: 12px;
-  font-weight: bold;
-  cursor: pointer;
-  white-space: nowrap;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-  width: 140px; /* 固定寬度讓視覺整齊 */
-  text-align: left;
-  transition: 0.2s;
+/* 使用者資訊區塊 */
+.user-info-box {
+  text-align: center;
+  padding-bottom: 5px;
 }
 
-.login-btn-new { background: white; color: #1e90ff; }
-.logout-btn-new { background: #ff4d4f; color: white; }
+.user-label {
+  font-size: 11px;
+  color: #888;
+  display: block;
+}
 
-.route-btn-new { background: #4caf50; color: white; } /* 綠色區分規劃功能 */
-.route-btn-new:hover { background: #43a047; }
+.user-name-text {
+  font-size: 16px;
+  font-weight: bold;
+  color: #1976d2;
+  margin: 5px 0;
+  word-wrap: break-word;
+}
 
+.menu-divider {
+  border: 0;
+  border-top: 1px solid #eee;
+  margin: 10px 0;
+}
 
+/* 按鈕樣式統一化 */
+.login-btn-new, .logout-btn-new, .route-btn-new {
+  width: 100% !important; /* 讓按鈕填滿 200px 的寬度 */
+  padding: 12px 15px;
+  margin-bottom: 8px;
+  border: none;
+  border-radius: 10px;
+  font-weight: bold;
+  cursor: pointer;
+  text-align: left;
+  transition: 0.2s;
+  box-sizing: border-box;
+}
 
+/* 使用者資訊區塊 */
+.user-profile {
+  text-align: center;
+  padding: 5px 0 10px 0;
+}
+
+.welcome-text {
+  font-size: 11px;
+  color: #aaa;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.user-name {
+  font-size: 16px;
+  font-weight: 800;
+  color: #1e90ff;
+  margin-top: 2px;
+}
+
+.divider {
+  border: 0;
+  border-top: 1px solid #f0f0f0;
+  margin: 12px 0;
+}
+
+/* 確保按鈕寬度一致且填滿選單 */
+.login-btn-new, .logout-btn-new, .route-btn-new {
+  width: 100% !important;
+  box-sizing: border-box;
+  margin-bottom: 8px;
+  text-align: center; /* 名字置中，按鈕也置中會比較協調 */
+}
+
+/* 各按鈕顏色細節 */
+.login-btn-new { background: #f0f7ff; color: #1e90ff; border: 1px solid #d0e8ff; }
+.login-btn-new:hover { background: #e0f0ff; }
+
+.logout-btn-new { background: #fff1f0; color: #ff4d4f; border: 1px solid #ffa39e; }
+.logout-btn-new:hover { background: #ffccc7; }
+
+.route-btn-new { background: #f6ffed; color: #4caf50; border: 1px solid #b7eb8f; }
+.route-btn-new:hover { background: #d9f7be; }

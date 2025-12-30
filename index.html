@@ -21,10 +21,17 @@
 
 <!-- 登入框 -->
 <div class="admin-menu">
-  <div class="main-trigger">👤</div>
+  <div class="main-trigger" id="userTrigger">👤</div>
+  
   <div class="menu-items">
+    <div id="userInfoBox" class="user-profile" style="display:none;">
+      <span class="welcome-text">歡迎回來</span>
+      <div id="userNameDisplay" class="user-name">訪客</div>
+      <hr class="divider">
+    </div>
+
     <button class="route-btn-new" id="mainRouteBtn" onclick="openRoutePlanner()">🧭 規劃路線</button>
-    <button class="login-btn-new" onclick="openLogin()">管理者登入</button>
+    <button class="login-btn-new" id="adminLoginBtn" onclick="openLogin()">🔑 管理者登入</button>
     <button id="logoutNavBtn" class="logout-btn-new" onclick="memberLogout()" style="display:none;">🔒 登出會員</button>
   </div>
 </div>
@@ -100,12 +107,59 @@
 
 <!-- ===== 會員登入 Modal ===== -->
 <div id="memberLoginModal" class="modal" onclick="closeMemberLogin(event)">
-  <div class="modal-content">
+  <div class="modal-content auth-card">
     <span class="close-btn" onclick="closeMemberLogin(event)">×</span>
-    <h3>會員登入</h3>
-    <input id="memberUser" placeholder="會員帳號"><br>
-    <input id="memberPass" type="password" placeholder="密碼"><br><br>
-    <button onclick="memberLogin()">登入</button>
+    
+    <div id="loginSection">
+      <h2 class="auth-title">會員登入</h2>
+      <div class="input-group">
+        <input id="memberUser" type="text" required>
+        <label>帳號</label>
+      </div>
+      <div class="input-group">
+        <input id="memberPass" type="password" required>
+        <label>密碼</label>
+      </div>
+      <button class="auth-btn primary" onclick="memberLogin()">立即登入</button>
+      <p class="auth-footer">還沒有帳號？ <a href="javascript:void(0)" onclick="toggleAuth('reg')">立即註冊</a></p>
+    </div>
+
+    <div id="registerSection" style="display:none;">
+  <h2 class="auth-title">加入會員</h2>
+  
+  <div class="input-group">
+    <input id="regUser" type="text" required>
+    <label>帳號 (ID)</label>
+  </div>
+
+  <div class="input-group">
+    <input id="regRealName" type="text" required>
+    <label>使用者姓名</label>
+  </div>
+
+  <div class="input-group">
+    <input id="regPhone" type="tel" required>
+    <label>電話號碼</label>
+  </div>
+
+  <div class="input-group">
+    <input id="regEmail" type="email" required>
+    <label>電子郵件 (Email)</label>
+  </div>
+
+  <div class="input-group">
+    <input id="regPass" type="password" required>
+    <label>設定密碼</label>
+  </div>
+
+  <div class="input-group">
+    <input id="regPassConfirm" type="password" required>
+    <label>確認密碼</label>
+  </div>
+
+  <button class="auth-btn secondary" onclick="memberRegister()">完成註冊</button>
+  <p class="auth-footer">已有帳號？ <a href="javascript:void(0)" onclick="toggleAuth('login')">返回登入</a></p>
+</div>
   </div>
 </div>
 
@@ -166,18 +220,122 @@ function openRoutePlanner() {
   if (logoutBtn) logoutBtn.style.display = "inline-block";
 }
 
-function memberLogin() {
-  const user = document.getElementById("memberUser").value;
-  const pass = document.getElementById("memberPass").value;
-
-  if (user === "user" && pass === "1234") {
-    localStorage.setItem("memberLogin", "true");
-    alert("會員登入成功！");
-    document.getElementById("memberLoginModal").style.display = "none";
-    openRoutePlanner();
+// 1. 切換登入與註冊介面
+function toggleAuth(mode) {
+  const loginSec = document.getElementById("loginSection");
+  const regSec = document.getElementById("registerSection");
+  if (mode === 'reg') {
+    loginSec.style.display = "none";
+    regSec.style.display = "block";
   } else {
-    alert("會員帳號或密碼錯誤");
+    loginSec.style.display = "block";
+    regSec.style.display = "none";
   }
+}
+
+// 2. 會員註冊邏輯
+function memberRegister() {
+  // 抓取所有欄位數值
+  const user = document.getElementById("regUser").value.trim();
+  const name = document.getElementById("regRealName").value.trim();
+  const phone = document.getElementById("regPhone").value.trim();
+  const email = document.getElementById("regEmail").value.trim();
+  const pass = document.getElementById("regPass").value.trim();
+  const passConfirm = document.getElementById("regPassConfirm").value.trim();
+
+  // 1. 檢查是否漏填
+  if (!user || !name || !phone || !email || !pass || !passConfirm) {
+    alert("所有欄位皆為必填！");
+    return;
+  }
+
+  // 2. 檢查密碼與確認密碼是否一致
+  if (pass !== passConfirm) {
+    alert("兩次輸入的密碼不相同，請重新確認！");
+    return;
+  }
+
+  // 3. 簡單的 Email 格式驗證
+  if (!email.includes("@")) {
+    alert("請輸入有效的 Email 地址！");
+    return;
+  }
+
+  // 4. 取得現有使用者清單並檢查帳號是否重複
+  let users = JSON.parse(localStorage.getItem("memberUsers")) || [];
+  if (users.some(u => u.username === user)) {
+    alert("此帳號已被註冊，請換一個帳號！");
+    return;
+  }
+
+  // 5. 儲存新使用者（包含所有資料）
+  const newUser = {
+    username: user,
+    realName: name,
+    phone: phone,
+    email: email,
+    password: pass // 實務上建議加密，但專題練習可用明文
+  };
+
+  users.push(newUser);
+  localStorage.setItem("memberUsers", JSON.stringify(users));
+
+  alert("恭喜註冊成功！快來規劃你的日本之旅吧。");
+  
+  // 清空註冊欄位 (選用)
+  clearRegisterFields();
+  
+  // 返回登入介面
+  toggleAuth('login');
+}
+
+// 清空註冊欄位函式
+function clearRegisterFields() {
+  const fields = ["regUser", "regRealName", "regPhone", "regEmail", "regPass", "regPassConfirm"];
+  fields.forEach(id => document.getElementById(id).value = "");
+}
+
+function memberLogin() {
+  const user = document.getElementById("memberUser").value.trim();
+  const pass = document.getElementById("memberPass").value.trim();
+
+  // 1. 取得註冊時存入的使用者清單
+  const savedUsers = JSON.parse(localStorage.getItem("memberUsers")) || [];
+
+  // 2. 預設的測試帳號 (保留你原本的測試帳號)
+  const isDefaultUser = (user === "user" && pass === "1234");
+
+  // 3. 在資料庫中尋找匹配的帳號與密碼
+  const foundUser = savedUsers.find(u => u.username === user && u.password === pass);
+
+  if (isDefaultUser || foundUser) {
+    // 登入成功邏輯
+    localStorage.setItem("memberLogin", "true");
+    
+    // 如果是從資料庫找到的，我們可以把使用者的姓名存起來，之後顯示在畫面上
+    const displayName = foundUser ? foundUser.realName : "測試用戶";
+    localStorage.setItem("currentUserName", displayName);
+
+    alert(`歡迎回來，${displayName}！登入成功。`);
+    
+    // 關閉彈窗並更新介面
+    document.getElementById("memberLoginModal").style.display = "none";
+    
+    // 執行你原本的更新邏輯
+    if (typeof updateUI === "function") updateUI();
+    if (typeof openRoutePlanner === "function") openRoutePlanner();
+    
+  } else {
+    // 登入失敗邏輯
+    alert("帳號或密碼錯誤，請再試一次");
+  }
+}
+
+function executeLogin() {
+  localStorage.setItem("memberLogin", "true");
+  alert("登入成功！已開啟路線規劃功能。");
+  document.getElementById("memberLoginModal").style.display = "none";
+  updateUI(); // 重新整理按鈕狀態
 }
 
 function updateRouteUI() {
@@ -198,32 +356,35 @@ function updateRouteUI() {
 }
 
 function updateUI() {
-  const isMemberLogin = localStorage.getItem("memberLogin") === "true";
-  const isAdminLogin = localStorage.getItem("admin") === "true"; // 新增這行偵測管理者
+  const isLogin = localStorage.getItem("memberLogin") === "true";
+  const userName = localStorage.getItem("currentUserName");
   
+  const infoBox = document.getElementById("userInfoBox");
+  const nameDisplay = document.getElementById("userNameDisplay");
+  const trigger = document.getElementById("userTrigger");
   const routeBtn = document.getElementById("mainRouteBtn");
-  const routePanel = document.getElementById("routePanel");
   const logoutBtn = document.getElementById("logoutNavBtn");
-  const adminEntryBtn = document.querySelector(".login-btn-new"); // 管理者登入按鈕
 
-  // --- 會員邏輯 ---
-  if (isMemberLogin) {
+  if (isLogin) {
+    // 1. 顯示選單內的名字區塊
+    if (infoBox) infoBox.style.display = "block";
+    if (nameDisplay) nameDisplay.innerText = userName || "會員";
+    
+    // 2. 圓圈按鈕保持原樣，但可以換個顏色代表已登入
+    trigger.innerHTML = "👤"; 
+    trigger.style.background = "#4caf50"; // 登入變綠色
+    
+    // 3. 控制其它按鈕
     if (routeBtn) routeBtn.style.display = "none";
-    if (routePanel) routePanel.style.display = "block";
     if (logoutBtn) logoutBtn.style.display = "block";
   } else {
+    // 未登入狀態
+    if (infoBox) infoBox.style.display = "none";
+    trigger.innerHTML = "👤";
+    trigger.style.background = "#1e90ff"; // 恢復藍色
+    
     if (routeBtn) routeBtn.style.display = "block";
-    if (routePanel) routePanel.style.display = "none";
     if (logoutBtn) logoutBtn.style.display = "none";
-  }
-
-  // --- 管理者邏輯：如果已經是管理者登入狀態，把按鈕文字改成「進入管理模式」 ---
-  if (isAdminLogin && adminEntryBtn) {
-    adminEntryBtn.innerText = "🛠 進入管理模式";
-    adminEntryBtn.onclick = function() { window.location.href = "admin.html"; };
-  } else if (adminEntryBtn) {
-    adminEntryBtn.innerText = "🔑 管理者登入";
-    adminEntryBtn.onclick = openLogin;
   }
 }
 
