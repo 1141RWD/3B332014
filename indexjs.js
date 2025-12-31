@@ -13,6 +13,9 @@ let events = JSON.parse(localStorage.getItem("events")) || defaultEvents;
 
 // --- 1. 初始化 Google Maps ---
 async function initMap() {
+    // 這是新版載入庫的方式，能解決 Autocomplete 的報錯
+    const { Map } = await google.maps.importLibrary("maps");
+    const { Autocomplete } = await google.maps.importLibrary("places");
     // 檢查 Google Maps 是否真的載入成功了
     if (typeof google === 'undefined' || typeof google.maps === 'undefined') {
         console.error("Google Maps API 尚未載入完成");
