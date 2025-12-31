@@ -224,5 +224,7 @@ function closeModal() {
 function goTo(p) { location.href = p; }
 function openLogin() {
     const b = document.getElementById("loginBox");
-    b.style.display = b.style.display === "none" ? "block" : "none";
+    if (b) {
+        b.style.display = (b.style.display === "none" ? "block" : "none");
+    }
 }
