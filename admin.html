@@ -6,7 +6,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="indexstyle.css">
     <link rel="stylesheet" href="admin.css">
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCFBbg5sSHvNKL_Q2tEh3g3sVJtbS6lNmI&callback=initAdminMap&libraries=places" async defer></script>
+    <style>
+        #adminMap { height: 300px; width: 100%; margin-bottom: 15px; border-radius: 8px; border: 1px solid #ddd; }
+        .delete-link { color: red; cursor: pointer; text-decoration: underline; }
+    </style>
 </head>
 <body>
 
@@ -79,6 +82,11 @@
 </div>
 
 <script src="admin.js"></script>
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAlfgWwpnHQVHsUmktq5s511cDVHvZcz10&callback=initMap" async defer></script>
+
+<script 
+    async 
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAlfgWwpnHQVHsUmktq5s511cDVHvZcz10&libraries=places&callback=initAdminMap&loading=async">
+</script>
+
 </body>
 </html>
