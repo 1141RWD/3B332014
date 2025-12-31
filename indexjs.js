@@ -23,8 +23,8 @@ const defaultEvents = [
     {region:"九州四國", title:"長崎原爆資料館", location:"長崎", lat:32.7725, lng:129.8643, desc:"祈禱世界和平的歷史之地", route:"長崎路面電車 → 原爆資料館站", img:"imges/長崎原爆資料館.jpg"},
     {region:"九州四國", title:"高松栗林公園", location:"香川", lat:34.3298, lng:134.0443, desc:"米其林三星級的大名庭園", route:"栗林公園北口站 → 步行3分鐘", img:"imges/高松栗林公園.jpg"}
 ];
-// --- 3. 把 let 改成 var (var 允許重複宣告，不會報錯) ---
-var events = JSON.parse(localStorage.getItem("events")) || defaultEvents;
+// 直接拿掉 let 或 var，這樣絕對不會報 Identifier already declared 錯誤
+events = JSON.parse(localStorage.getItem("events")) || defaultEvents;
 
 // --- 1. 初始化 Google Maps ---
 async function initMap() {
