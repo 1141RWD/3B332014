@@ -59,9 +59,14 @@ function addEvent() {
 
     if (!title || !lat || !lng) { alert("請填寫活動名稱並在地圖上選取位置！"); return; }
 
-    let events = JSON.parse(localStorage.getItem("events")) || [];
-    events.push({ region, title, location, lat: parseFloat(lat), lng: parseFloat(lng), desc, img });
-    localStorage.setItem("events", JSON.stringify(events));
+    // 【修改點】不要用 const events，直接讀取或初始化
+    let currentEvents = JSON.parse(localStorage.getItem("events")) || [];
+    
+    // 如果 localstorage 還是空的（第一次使用後台），記得把 indexjs.js 裡的預設 12 個補進去，否則首頁會變空白
+    // 但如果你已經 clear 過了，這裡直接 push 就好
+    currentEvents.push({ region, title, location, lat: parseFloat(lat), lng: parseFloat(lng), desc, img });
+    
+    localStorage.setItem("events", JSON.stringify(currentEvents));
     
     alert("活動已成功新增！");
     clearForm();
