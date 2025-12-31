@@ -70,7 +70,7 @@ async function initMap() {
         // 選完後清空文字，方便規劃下一站
         input.value = "";
     });
-
+    console.log("目前的行程資料：", gRoutePoints);
     renderEvents();
     updateUI();
 }
