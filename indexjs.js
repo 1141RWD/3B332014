@@ -13,6 +13,13 @@ let events = JSON.parse(localStorage.getItem("events")) || defaultEvents;
 
 // --- 1. 初始化 Google Maps ---
 async function initMap() {
+    // 【新增】確保資料已讀取
+    const savedData = localStorage.getItem("gRoutePoints");
+    if (savedData) {
+        gRoutePoints = JSON.parse(savedData);
+    } else {
+        gRoutePoints = []; // 若無資料則初始化
+    }
     // 1. 新版載入庫的方式，確保 Map 與 Autocomplete 可用
     const { Map } = await google.maps.importLibrary("maps");
     const { Autocomplete } = await google.maps.importLibrary("places");
