@@ -1,0 +1,90 @@
+.jp-filters { text-align:center; margin:20px 0; }
+.jp-filters button {
+  margin:5px; padding:10px 16px;
+  border:none; border-radius:20px;
+  background:#eee; cursor:pointer;
+}
+.jp-filters button.active {
+  background:#d32f2f; color:#fff;
+}
+
+.jp-card {
+  background:#fff;
+  padding:18px;
+  margin:15px auto;
+  max-width:600px;
+  border-radius:12px;
+  box-shadow:0 4px 12px rgba(0,0,0,.1);
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+.jp-text strong { font-size:1.2rem; }
+.jp-btn {
+  border:none; background:#d32f2f;
+  color:#fff; padding:8px 12px;
+  border-radius:8px; cursor:pointer;
+}
+
+.phrase-item {
+    background: #fff;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    transition: background 0.3s;
+}
+
+.phrase-item:hover {
+    background: #f9f9f9;
+}
+
+/* 讓羅馬拼音看起來比較柔和 */
+.romaji-row span {
+    letter-spacing: 0.5px;
+    font-family: 'Arial', sans-serif;
+}
+
+.phrase-item {
+    background: white;
+    padding: 20px;
+    margin-bottom: 15px;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    border-left: 5px solid #4caf50; /* 加個裝飾條 */
+}
+
+.jp-text {
+    font-size: 1.4rem;
+    font-weight: bold;
+    color: #333;
+}
+
+.romaji-text {
+    font-size: 1rem;
+    color: #1e90ff; /* 羅馬拼音用藍色 */
+    font-style: italic;
+    margin: 5px 0;
+}
+
+.zh-text {
+    font-size: 1.1rem;
+    color: #666;
+}
+
+.jp-filters {
+    margin-bottom: 20px;
+    display: flex;
+    gap: 10px;
+}
+
+.jp-filters button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    background: #eee;
+}
+
+.jp-filters button.active {
+    background: #4caf50;
+    color: white;
+}

@@ -1,0 +1,91 @@
+body {
+    margin: 0;
+    font-family: "Segoe UI", "微軟正黑體", sans-serif;
+    background: #f5f7fa;
+    color: #333;
+}
+
+header {
+    background: linear-gradient(120deg, #1e90ff, #4facfe);
+    color: white;
+    text-align: center;
+    padding: 30px 20px;
+}
+
+nav {
+    background: white;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+nav ul {
+    display: flex;
+    justify-content: center;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+nav li {
+    padding: 15px 25px;
+    cursor: pointer;
+}
+
+nav li:hover {
+    background: #1e90ff;
+    color: white;
+}
+
+.container {
+    max-width: 800px;
+    margin: 30px auto;
+    padding: 20px;
+}
+
+.quiz-box {
+    background: white;
+    border-radius: 15px;
+    padding: 25px;
+    box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+}
+
+.question {
+    font-size: 18px;
+    margin-bottom: 20px;
+}
+
+.options button {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 10px;
+    border: none;
+    border-radius: 10px;
+    background: #eee;
+    cursor: pointer;
+    font-size: 15px;
+}
+
+.options button:hover {
+    background: #1e90ff;
+    color: white;
+}
+
+.result {
+    margin-top: 15px;
+    font-weight: bold;
+}
+
+.score {
+    margin-top: 20px;
+    text-align: right;
+    color: #555;
+}
+
+footer {
+    text-align: center;
+    padding: 15px;
+    margin-top: 40px;
+    background: #333;
+    color: white;
+    font-size: 14px;
+}

@@ -4,100 +4,8 @@
   <meta charset="UTF-8">
   <title>JapanGo｜日本入境海關 Q&A</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <style>
-    body {
-      margin: 0;
-      font-family: "Segoe UI", "微軟正黑體", sans-serif;
-      background: #f5f7fa;
-      color: #333;
-    }
-
-    header {
-      background: linear-gradient(120deg, #1e90ff, #4facfe);
-      color: white;
-      text-align: center;
-      padding: 30px 20px;
-    }
-
-    nav {
-      background: white;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    }
-
-    nav ul {
-      display: flex;
-      justify-content: center;
-      list-style: none;
-      padding: 0;
-      margin: 0;
-    }
-
-    nav li {
-      padding: 15px 25px;
-      cursor: pointer;
-    }
-
-    nav li:hover {
-      background: #1e90ff;
-      color: white;
-    }
-
-    .container {
-      max-width: 800px;
-      margin: 30px auto;
-      padding: 20px;
-    }
-
-    .quiz-box {
-      background: white;
-      border-radius: 15px;
-      padding: 25px;
-      box-shadow: 0 6px 15px rgba(0,0,0,0.1);
-    }
-
-    .question {
-      font-size: 18px;
-      margin-bottom: 20px;
-    }
-
-    .options button {
-      display: block;
-      width: 100%;
-      padding: 12px;
-      margin-bottom: 10px;
-      border: none;
-      border-radius: 10px;
-      background: #eee;
-      cursor: pointer;
-      font-size: 15px;
-    }
-
-    .options button:hover {
-      background: #1e90ff;
-      color: white;
-    }
-
-    .result {
-      margin-top: 15px;
-      font-weight: bold;
-    }
-
-    .score {
-      margin-top: 20px;
-      text-align: right;
-      color: #555;
-    }
-
-    footer {
-      text-align: center;
-      padding: 15px;
-      margin-top: 40px;
-      background: #333;
-      color: white;
-      font-size: 14px;
-    }
-  </style>
+  <link rel="stylesheet" href="Entryquiz.css">
+  <link rel="stylesheet" href="indexstyle.css">
 </head>
 
 <body>
@@ -107,11 +15,15 @@
   <p>出海關前一定要知道的小知識</p>
 </header>
 
-<nav>
-  <ul>
-    <li onclick="location.href='index.html'">首頁</li>
-    <li onclick="location.href='customs.html'">入境注意</li>
-  </ul>
+<nav class="navbar">
+    <ul>
+        <li onclick="goTo('index.html')">首頁</li>
+        <li onclick="goTo('customs.html')">入境注意</li>
+        <li onclick="goTo('internal.html')">國內注意</li>
+        <li onclick="goTo('Entryquiz.html')">入境 Q&A</li>
+        <li onclick="goTo('quiz.html')">國內 Q&A</li>
+        <li onclick="goTo('japanese.html')">日文學習</li>
+    </ul>
 </nav>
 
 <div class="container">
@@ -134,65 +46,7 @@
   © 2025 JapanGo｜日本旅遊前端專題
 </footer>
 
-<script>
-  const quizData = [
-    {
-      q: "入境日本時，下列哪一項需要申報？",
-      options: ["個人衣物", "超過免稅額的香菸", "手機", "相機"],
-      answer: 1
-    },
-    {
-      q: "入境日本時，肉類食品可以攜帶嗎？",
-      options: ["可以", "不可以", "只限熟食", "只限少量"],
-      answer: 1
-    },
-    {
-      q: "Visit Japan Web 的主要用途是？",
-      options: ["訂飯店", "填寫入境資料", "買車票", "查天氣"],
-      answer: 1
-    }
-  ];
-
-  let current = 0;
-  let score = 0;
-
-  const questionEl = document.getElementById("question");
-  const buttons = document.querySelectorAll(".options button");
-  const resultEl = document.getElementById("result");
-  const scoreEl = document.getElementById("score");
-
-  function loadQuestion() {
-    const data = quizData[current];
-    questionEl.textContent = data.q;
-    buttons.forEach((btn, index) => {
-      btn.textContent = data.options[index];
-    });
-    resultEl.textContent = "";
-    scoreEl.textContent = `目前分數：${score}`;
-  }
-
-  function answer(choice) {
-    if (choice === quizData[current].answer) {
-      resultEl.textContent = "✅ 答對了！";
-      score++;
-    } else {
-      resultEl.textContent = "❌ 答錯囉！";
-    }
-
-    current++;
-    if (current < quizData.length) {
-      setTimeout(loadQuestion, 800);
-    } else {
-      setTimeout(() => {
-        questionEl.textContent = "🎉 問答完成！";
-        document.querySelector(".options").style.display = "none";
-        resultEl.textContent = `你的總分是 ${score} / ${quizData.length}`;
-      }, 800);
-    }
-  }
-
-  loadQuestion();
-</script>
+<script src="Entryquiz.js"></script>
 
 </body>
 </html>

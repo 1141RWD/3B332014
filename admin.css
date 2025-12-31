@@ -1,0 +1,20 @@
+body { background: #f4f7f6; padding: 20px; }
+.admin-container { max-width: 1000px; margin: 0 auto; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
+#adminMap { height: 300px; width: 100%; border-radius: 10px; margin-bottom: 20px; border: 2px solid #ddd; }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+.form-group { display: flex; flex-direction: column; }
+input, select, textarea { padding: 10px; border: 1px solid #ddd; border-radius: 8px; margin-top: 5px; }
+.btn-group { display: flex; gap: 10px; }
+button { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+.save-btn { background: #1976d2; color: white; }
+.clear-btn { background: #999; color: white; }
+.logout-btn { background: #ff4d4f; color: white; float: right; }
+
+table { width: 100%; border-collapse: collapse; margin-top: 30px; }
+th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: left; }
+th { background: #f8f9fa; color: #1976d2; }
+.delete-link { color: #ff4d4f; cursor: pointer; font-size: 14px; }
+
+.tab-group { border-bottom: 2px solid #eee; margin-bottom: 20px; display: flex; gap: 20px; }
+.tab { padding: 10px 20px; cursor: pointer; border-bottom: 3px solid transparent; }
+.tab.active { border-bottom: 3px solid #1976d2; color: #1976d2; font-weight: bold; }

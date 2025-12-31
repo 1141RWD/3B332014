@@ -1,0 +1,70 @@
+body {
+      margin: 0;
+      font-family: "Noto Sans TC", "微軟正黑體", sans-serif;
+      background: #f4f6f9;
+      color: #333;
+    }
+
+    header {
+      background: linear-gradient(120deg, #1976d2, #42a5f5);
+      color: white;
+      text-align: center;
+      padding: 30px 20px;
+    }
+
+    nav {
+      background: white;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+
+    nav ul {
+      display: flex;
+      justify-content: center;
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    nav li {
+      padding: 15px 25px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    nav li:hover {
+      background: #42a5f5;
+      color: white;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 30px auto;
+      padding: 20px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 15px;
+      padding: 25px;
+      margin-bottom: 25px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+    }
+
+    h2 {
+      color: #1976d2;
+      margin-top: 0;
+    }
+
+    .note {
+      border-left: 5px solid #42a5f5;
+      padding-left: 10px;
+      margin: 10px 0;
+    }
+
+    footer {
+      text-align: center;
+      padding: 15px;
+      background: #333;
+      color: #aaa;
+      margin-top: 40px;
+    }
