@@ -13,464 +13,188 @@ let events = JSON.parse(localStorage.getItem("events")) || defaultEvents;
 
 // --- 1. 初始化 Google Maps ---
 async function initMap() {
-    // 【新增】確保資料已讀取
+    // 讀取本地快取資料
     const savedData = localStorage.getItem("gRoutePoints");
-    if (savedData) {
-        gRoutePoints = JSON.parse(savedData);
-    } else {
-        gRoutePoints = []; // 若無資料則初始化
-    }
-    // 1. 新版載入庫的方式，確保 Map 與 Autocomplete 可用
+    gRoutePoints = savedData ? JSON.parse(savedData) : [];
+
+    // 載入必要的函式庫
     const { Map } = await google.maps.importLibrary("maps");
     const { Autocomplete } = await google.maps.importLibrary("places");
 
-    // 2. 初始化地圖 (直接使用解構出來的 Map)
+    // 初始化地圖
     const center = { lat: 36.2048, lng: 138.2529 };
     map = new Map(document.getElementById("map"), {
         zoom: 5,
         center: center,
-        mapId: "DEMO_MAP_ID", // 建議換成你自己在 Google Console 設定的 Map ID
+        mapId: "DEMO_MAP_ID", 
         mapTypeControl: false,
         streetViewControl: true
     });
 
-    // 3. 啟動搜尋功能 (直接使用解構出來的 Autocomplete)
+    // 搜尋功能初始化
     const input = document.getElementById("startPointInput");
-    if (!input) {
-        console.error("找不到 ID 為 startPointInput 的輸入框");
-        return;
+    if (input) {
+        const autocomplete = new Autocomplete(input, {
+            componentRestrictions: { country: "jp" },
+            fields: ["geometry", "name"]
+        });
+
+        autocomplete.addListener("place_changed", () => {
+            const place = autocomplete.getPlace();
+            if (!place || !place.geometry) return;
+            addStopToItinerary(place.geometry.location.lat(), place.geometry.location.lng(), "🏠 " + place.name);
+            input.value = "";
+        });
     }
 
-    const autocomplete = new Autocomplete(input, {
-        componentRestrictions: { country: "jp" }, // 限制在日本搜尋
-        fields: ["geometry", "name"]
-    });
-
-    // 4. 監聽選取事件
-    autocomplete.addListener("place_changed", () => {
-        const place = autocomplete.getPlace();
-
-        if (!place || !place.geometry || !place.geometry.location) {
-            alert("請從下拉選單中選擇正確的地點！");
-            return;
-        }
-
-        // 取得地點的座標與名稱
-        const lat = place.geometry.location.lat();
-        const lng = place.geometry.location.lng();
-        const name = "🏠 " + place.name;
-
-        // 觸發加入行程功能
-        if (typeof addStopToItinerary === 'function') {
-            addStopToItinerary(lat, lng, name);
-        } else {
-            console.error("找不到 addStopToItinerary 函式");
-        }
-
-        // 選完後清空文字，方便規劃下一站
-        input.value = "";
-    });
-    console.log("目前的行程資料：", gRoutePoints);
+    // 渲染 UI
     renderEvents();
+    renderItineraryUI();
+    drawGRoute();
     updateUI();
 }
 
-// 渲染右下角清單 UI
-function renderItineraryUI() {
-    const list = document.getElementById("itineraryList");
-    const hint = document.getElementById("emptyHint");
-    if (!list) return;
-
-    if (gRoutePoints.length > 0 && hint) hint.style.display = "none";
-    
-    list.innerHTML = gRoutePoints.map((p, index) => `
-        <div style="display:flex; justify-content:space-between; align-items:center; background:#f0f0f0; margin:5px 0; padding:8px; border-radius:5px; font-size:13px; color:#333;">
-            <span>${index + 1}. ${p.name}</span>
-            <span onclick="removeStop(${index})" style="color:red; cursor:pointer; font-weight:bold; margin-left:10px;">✕</span>
-        </div>
-    `).join('');
-}
-
-// 在地圖上畫出帶有編號的標記和連線
-async function drawGRoute() {
-    // 清除舊的
-    if (gRouteLine) gRouteLine.setMap(null);
-    gRouteMarkers.forEach(m => m.map = null);
-    gRouteMarkers = [];
-
-    const { AdvancedMarkerElement, PinElement } = await google.maps.importLibrary("marker");
-
-    // 畫出所有點
-    gRoutePoints.forEach((p, index) => {
-        const pin = new PinElement({
-            glyph: (index + 1).toString(),
-            background: "#1e90ff",
-            borderColor: "white",
-            glyphColor: "white",
-        });
-
-        const m = new AdvancedMarkerElement({
-            position: p.pos,
-            map: map,
-            content: pin.element,
-            title: p.name
-        });
-        gRouteMarkers.push(m);
-    });
-
-    // 畫連線
-    if (gRoutePoints.length >= 2) {
-        const path = gRoutePoints.map(p => p.pos);
-        gRouteLine = new google.maps.Polyline({
-            path: path,
-            strokeColor: "#1e90ff",
-            strokeOpacity: 0.8,
-            strokeWeight: 4,
-            map: map
-        });
-    }
-    
-    const countEl = document.getElementById("routeCount");
-    if (countEl) countEl.innerText = "目前節點：" + gRoutePoints.length;
-}
-
-// 移除單一站點
-function removeStop(index) {
-    gRoutePoints.splice(index, 1);
-    renderItineraryUI();
-    drawGRoute();
-}
-
-// 清空全部
-function clearRoute() {
-    gRoutePoints = [];
-    renderItineraryUI();
-    drawGRoute();
-    if (document.getElementById("emptyHint")) document.getElementById("emptyHint").style.display = "block";
-}
-
-// --- 3. 原有的卡片與會員邏輯 (已整合新功能) ---
-
-async function selectEvent(lat, lng, title, loc, desc, route, img) {
-    const pos = { lat: Number(lat), lng: Number(lng) };
-    map.setCenter(pos);
-    map.setZoom(15);
-
-    if (gMarker) gMarker.map = null;
-    const { AdvancedMarkerElement } = await google.maps.importLibrary("marker");
-    gMarker = new AdvancedMarkerElement({ map: map, position: pos, title: title });
-
-    document.getElementById("modalImg").src = img;
-    document.getElementById("modalTitle").innerText = title;
-    document.getElementById("modalLocation").innerText = "📍 " + loc;
-    document.getElementById("modalDesc").innerText = desc;
-    
-    // 在 Modal 加入一個按鈕來「加入行程」
-    document.getElementById("modalRoute").innerHTML = `
-        <p>🚶 推薦路線：${route}</p>
-        <button onclick="addStopToItinerary(${lat}, ${lng}, '${title}')" 
-                style="background:#4caf50; color:white; border:none; padding:8px 15px; border-radius:5px; cursor:pointer; width:100%; font-weight:bold; margin-top:10px;">
-            ➕ 加入我的行程清單
-        </button>
-    `;
-    document.getElementById("eventModal").style.display = "flex";
-}
-
-function toggleAuth(mode) {
-    document.getElementById("loginSection").style.display = (mode === 'reg' ? "none" : "block");
-    document.getElementById("registerSection").style.display = (mode === 'reg' ? "block" : "none");
-}
-
-function memberRegister() {
-    const user = document.getElementById("regUser").value.trim();
-    const name = document.getElementById("regRealName").value.trim();
-    const email = document.getElementById("regEmail").value.trim(); // 👈 1. 補上這行
-    const pass = document.getElementById("regPass").value.trim();
-    const passConfirm = document.getElementById("regPassConfirm").value.trim();
-
-    // 2. 檢查欄位時也要檢查 email 是否有填
-    if (!user || !name || !email || pass !== passConfirm) { 
-        alert("請填寫所有欄位並確認密碼一致！"); 
-        return; 
-    }
-
-    let users = JSON.parse(localStorage.getItem("memberUsers")) || [];
-    
-    // 3. 檢查帳號是否重複 (進階建議)
-    if (users.find(u => u.username === user)) {
-        alert("此帳號已被註冊！");
-        return;
-    }
-
-    // 4. 將 email 存入物件中
-    users.push({ 
-        username: user, 
-        realName: name, 
-        email: email, // 👈 這裡一定要存進去
-        password: pass 
-    });
-
-    localStorage.setItem("memberUsers", JSON.stringify(users));
-    alert("註冊成功！請登入。");
-    toggleAuth('login');
-}
-
-function memberLogin() {
-    const user = document.getElementById("memberUser").value.trim();
-    const pass = document.getElementById("memberPass").value.trim();
-    const savedUsers = JSON.parse(localStorage.getItem("memberUsers")) || [];
-    
-    // 尋找匹配的用戶
-    const found = savedUsers.find(u => u.username === user && u.password === pass);
-    
-    if (found) {
-        localStorage.setItem("memberLogin", "true");
-        localStorage.setItem("currentUserName", found.realName);
-        localStorage.setItem("currentUserEmail", found.email); 
-        location.reload();
-    } else { 
-        alert("帳號或密碼錯誤！"); 
-    }
-}
-
-function updateUI() {
-   const isLogin = localStorage.getItem("memberLogin") === "true";
-    const infoBox = document.getElementById("userInfoBox");
-    if (infoBox) infoBox.style.display = isLogin ? "block" : "none";
-    
-    if (isLogin) {
-        document.getElementById("userNameDisplay").innerText = localStorage.getItem("currentUserName");
-        // 登入後，「規劃路線」按鈕應該維持顯示，讓使用者隨時點開左側欄
-        document.getElementById("mainRouteBtn").style.display = "block"; 
-    }
-    
-    document.getElementById("userTrigger").style.background = isLogin ? "#4caf50" : "#1e90ff";
-    document.getElementById("logoutNavBtn").style.display = isLogin ? "block" : "none";
-}
-
-function memberLogout() {
-    localStorage.removeItem("memberLogin");
-    localStorage.removeItem("currentUserName");
-    location.reload();
-}
-
+// 渲染活動小卡
 function renderEvents() {
-    const keyword = document.getElementById("searchInput").value.toLowerCase();
-    const region = document.getElementById("regionFilter").value;
-    const lists = { "北海道": hokkaido, "本州": honshu, "九州四國": kyushu };
-    Object.values(lists).forEach(el => el.innerHTML = "");
+    const keyword = (document.getElementById("searchInput")?.value || "").toLowerCase();
+    const regionFilter = document.getElementById("regionFilter")?.value || "全部";
+    
+    const lists = { 
+        "北海道": document.getElementById("hokkaido"), 
+        "本州": document.getElementById("honshu"), 
+        "九州四國": document.getElementById("kyushu") 
+    };
+
+    Object.values(lists).forEach(el => { if(el) el.innerHTML = ""; });
+
     events.filter(e => {
         const mText = e.title.toLowerCase().includes(keyword) || e.location.toLowerCase().includes(keyword);
-        const mRegion = region === "全部" || e.region === region;
+        const mRegion = regionFilter === "全部" || e.region === regionFilter;
         return mText && mRegion;
     }).forEach(e => {
         const card = `
             <div class="event-card" onclick="selectEvent(${e.lat},${e.lng},'${e.title}','${e.location}','${e.desc}','${e.route}','${e.img}')">
-                <div class="event-img" style="background-image:url('${e.img || 'images/default.jpg'}')"></div>
+                <div class="event-img" style="background-image:url('${e.img || 'imges/default.jpg'}')"></div>
                 <div class="event-info"><h3>${e.title}</h3><p>📍 ${e.location}</p></div>
             </div>`;
         if (lists[e.region]) lists[e.region].innerHTML += card;
     });
 }
 
-function openLogin() { 
-    const b = document.getElementById("loginBox");
-    b.style.display = (b.style.display === "none" ? "block" : "none");
-}
-
-function login() {
-    if(document.getElementById("adminUser").value==="admin" && document.getElementById("adminPass").value==="1234") {
-        localStorage.setItem("admin","true");
-        window.location.href="admin.html";
-    } else { alert("錯誤"); }
-}
-
-function closeModal(e) {
-    if(e.target.classList.contains("modal") || e.target.classList.contains("close-btn")) {
-        document.getElementById("eventModal").style.display="none";
-        document.getElementById("memberLoginModal").style.display="none";
-    }
-}
-
-// --- 修改面板開關邏輯 ---
-function openRoutePlanner() {
-    // 檢查登入
-    if (localStorage.getItem("memberLogin") !== "true") {
-        document.getElementById("memberLoginModal").style.display = "flex";
-        return;
-    }
-    // 顯示側邊欄
-    document.getElementById("sideRoutePanel").classList.add("active");
-}
-
-function closeRoutePlanner() {
-    document.getElementById("sideRoutePanel").classList.remove("active");
-}
-
-/* ================== 匯出行程文檔功能 ================== */
-function exportItinerary() {
-    // 1. 抓取資料
-    const userName = localStorage.getItem("currentUserName") || "遊客";
-    const userEmail = localStorage.getItem("currentUserEmail") || "未提供";
-
-    if (typeof gRoutePoints === 'undefined' || gRoutePoints.length === 0) {
-        alert("目前行程清單是空的，無法匯出喔！");
-        return;
-    }
-
-    // 2. 構建文檔內容 (排版美化)
-    let content = `【 JapanGo 旅遊行程規劃文檔 】\r\n`;
-    content += `==========================================\r\n`;
-    content += `規劃者：${userName}\r\n`;
-    content += `聯絡信箱：${userEmail}\r\n`;
-    content += `匯出日期：${new Date().toLocaleString()}\r\n`;
-    content += `==========================================\r\n\r\n`;
-    content += `詳細行程順序：\r\n`;
-
-    gRoutePoints.forEach((point, index) => {
-        const prefix = (index === 0) ? "📍 [起點] " : `🚩 [第 ${index} 站] `;
-        content += `${prefix}${point.name}\r\n`;
-    });
-
-    content += `\r\n==========================================\r\n`;
-    content += `感謝使用 JapanGo，祝您旅途愉快！`;
-
-    // 3. 執行下載動作
-    const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    
-    // 設定檔名，例如：我的日本行程_2024.txt
-    const dateStr = new Date().toISOString().slice(0, 10);
-    a.href = url;
-    a.download = `JapanGo_行程_${userName}_${dateStr}.txt`;
-    
-    // 觸發點擊並移除
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-
-    alert("✅ 行程文檔已生成並開始下載！");
-}
-
-// 清除所有行程功能
-function clearItinerary() {
-    // 1. 彈出確認視窗，避免使用者誤點
-    if (gRoutePoints.length === 0) {
-        alert("目前的行程已經是空的囉！");
-        return;
-    }
-
-    if (!confirm("確定要清空目前規劃的所有行程嗎？此動作無法復原。")) {
-        return;
-    }
-
-    // 2. 清空存儲地點的陣列
-    gRoutePoints = [];
-
-    // 3. 清除地圖上的線條與標記
-    // 假設你的線條變數是 gPolyline
-    if (typeof gPolyline !== 'undefined' && gPolyline) {
-        gPolyline.setMap(null);
-        gPolyline = null;
-    }
-
-    // 4. 清除地圖上的所有數字標記 (Markers)
-    // 假設你用一個陣列 gMarkers 存儲所有標記
-    if (typeof gMarkers !== 'undefined' && gMarkers) {
-        gMarkers.forEach(marker => marker.setMap(null));
-        gMarkers = [];
-    }
-
-    // 5. 重新渲染左側介面 (會顯示「尚未加入景點」的提示)
+// 加入行程點
+async function addStopToItinerary(lat, lng, name) {
+    const pos = { lat: Number(lat), lng: Number(lng) };
+    gRoutePoints.push({ pos, name });
+    localStorage.setItem("gRoutePoints", JSON.stringify(gRoutePoints));
     renderItineraryUI();
-
-    // 6. 重置搜尋輸入框
-    const input = document.getElementById("startPointInput");
-    if (input) input.value = "";
-
-    alert("行程已全部清空！");
+    drawGRoute();
 }
 
-// 儲存目前行程到本地紀錄
-function saveCustomerRecord() {
-    if (gRoutePoints.length === 0) {
-        alert("目前沒有行程資料可以儲存！");
-        return;
-    }
+// 渲染清單 UI
+function renderItineraryUI() {
+    const list = document.getElementById("itineraryList");
+    const hint = document.getElementById("emptyHint");
+    if (!list) return;
+    if (hint) hint.style.display = gRoutePoints.length > 0 ? "none" : "block";
 
-    const userName = localStorage.getItem("currentUserName") || "訪客";
-    
-    // 建立紀錄物件
-    const record = {
-        user: userName,
-        timestamp: new Date().toLocaleString(),
-        route: gRoutePoints,
-        count: gRoutePoints.length
-    };
-
-    // 取得舊紀錄或建立新陣列
-    let history = JSON.parse(localStorage.getItem("itineraryHistory")) || [];
-    
-    // 將新紀錄推入最前面
-    history.unshift(record);
-
-    // 儲存回 localStorage
-    localStorage.setItem("itineraryHistory", JSON.stringify(history));
-
-    alert(`✅ 已成功儲存 ${userName} 的行程紀錄！`);
-    renderHistoryList(); // 更新顯示歷史紀錄 (如果有的話)
-}
-
-// 切換歷史紀錄清單的顯示/隱藏
-function toggleHistoryList() {
-    const container = document.getElementById("historyContainer");
-    if (container.style.display === "none") {
-        renderHistoryList(); // 展開時順便刷新內容
-        container.style.display = "block";
-    } else {
-        container.style.display = "none";
-    }
-}
-
-// 修改渲染歷史紀錄的邏輯，配合按鈕下方的容器
-function renderHistoryList() {
-    const history = JSON.parse(localStorage.getItem("itineraryHistory")) || [];
-    const container = document.getElementById("historyContainer");
-    
-    if (!container) return;
-
-    if (history.length === 0) {
-        container.innerHTML = `<p style="font-size: 12px; color: #999; text-align: center; padding: 10px;">尚無紀錄</p>`;
-        return;
-    }
-
-    container.innerHTML = history.map((rec, index) => `
-        <div class="history-record-item" onclick="loadHistoryRecord(${index})" style="padding: 10px; border-bottom: 1px solid #eee; cursor: pointer;">
-            <div style="font-size: 11px; font-weight: bold; color: #333;">📅 ${rec.timestamp}</div>
-            <div style="font-size: 11px; color: #1e90ff;">📍 共 ${rec.count} 個地點</div>
+    list.innerHTML = gRoutePoints.map((p, index) => `
+        <div style="display:flex; justify-content:space-between; align-items:center; background:#f0f0f0; margin:5px 0; padding:8px; border-radius:5px; font-size:13px;">
+            <span>${index + 1}. ${p.name}</span>
+            <span onclick="removeStop(${index})" style="color:red; cursor:pointer; font-weight:bold;">✕</span>
         </div>
     `).join('');
 }
 
-// 當載入紀錄時，順便把選單關掉，讓畫面清爽
-function loadHistoryRecord(index) {
-    const history = JSON.parse(localStorage.getItem("itineraryHistory")) || [];
-    const record = history[index];
-    if (!record) return;
+// 在地圖上繪製路徑
+async function drawGRoute() {
+    if (gRouteLine) gRouteLine.setMap(null);
+    gRouteMarkers.forEach(m => m.map = null);
+    gRouteMarkers = [];
 
-    gRoutePoints = record.route;
-    renderItineraryUI();
-    drawGRoute();
+    const { AdvancedMarkerElement, PinElement } = await google.maps.importLibrary("marker");
 
-    // 關閉清單小盒子
-    document.getElementById("historyContainer").style.display = "none";
-    // 打開左側規劃面板
-    document.getElementById("sideRoutePanel").classList.add("active");
-    
-    alert("歷史紀錄載入成功！");
+    gRoutePoints.forEach((p, index) => {
+        const pin = new PinElement({ glyph: (index + 1).toString(), background: "#1e90ff", glyphColor: "white" });
+        const m = new AdvancedMarkerElement({ position: p.pos, map: map, content: pin.element, title: p.name });
+        gRouteMarkers.push(m);
+    });
+
+    if (gRoutePoints.length >= 2) {
+        gRouteLine = new google.maps.Polyline({
+            path: gRoutePoints.map(p => p.pos),
+            strokeColor: "#1e90ff",
+            strokeWeight: 4,
+            map: map
+        });
+    }
 }
 
-function goTo(p){ location.href=p; }
-function closeMemberLogin(e) { closeModal(e); }
+function removeStop(index) {
+    gRoutePoints.splice(index, 1);
+    localStorage.setItem("gRoutePoints", JSON.stringify(gRoutePoints));
+    renderItineraryUI();
+    drawGRoute();
+}
+
+function clearItinerary() {
+    if (!confirm("確定要清空行程嗎？")) return;
+    gRoutePoints = [];
+    localStorage.removeItem("gRoutePoints");
+    renderItineraryUI();
+    drawGRoute();
+}
+
+// 點擊卡片顯示詳情
+async function selectEvent(lat, lng, title, loc, desc, route, img) {
+    const pos = { lat: Number(lat), lng: Number(lng) };
+    map.setCenter(pos);
+    map.setZoom(15);
+
+    const { AdvancedMarkerElement } = await google.maps.importLibrary("marker");
+    if (gMarker) gMarker.map = null;
+    gMarker = new AdvancedMarkerElement({ map: map, position: pos, title: title });
+
+    document.getElementById("modalImg").src = img;
+    document.getElementById("modalTitle").innerText = title;
+    document.getElementById("modalLocation").innerText = "📍 " + loc;
+    document.getElementById("modalDesc").innerText = desc;
+    document.getElementById("modalRoute").innerHTML = `
+        <p>🚶 推薦路線：${route}</p>
+        <button onclick="addStopToItinerary(${lat}, ${lng}, '${title}')" style="background:#4caf50; color:white; border:none; padding:10px; border-radius:5px; cursor:pointer; width:100%; margin-top:10px;">
+            ➕ 加入我的行程清單
+        </button>
+    `;
+    document.getElementById("eventModal").style.display = "flex";
+}
+
+// --- 會員與輔助功能 ---
+function updateUI() {
+    const isLogin = localStorage.getItem("memberLogin") === "true";
+    document.getElementById("userInfoBox").style.display = isLogin ? "block" : "none";
+    if (isLogin) document.getElementById("userNameDisplay").innerText = localStorage.getItem("currentUserName");
+    document.getElementById("logoutNavBtn").style.display = isLogin ? "block" : "none";
+}
+
+function memberLogout() {
+    localStorage.removeItem("memberLogin");
+    location.reload();
+}
+
+function openRoutePlanner() {
+    if (localStorage.getItem("memberLogin") !== "true") {
+        document.getElementById("memberLoginModal").style.display = "flex";
+        return;
+    }
+    document.getElementById("sideRoutePanel").classList.add("active");
+}
+
+function closeRoutePlanner() { document.getElementById("sideRoutePanel").classList.remove("active"); }
+function closeModal() { 
+    document.getElementById("eventModal").style.display = "none"; 
+    document.getElementById("memberLoginModal").style.display = "none";
+}
+function goTo(p) { location.href = p; }
+function openLogin() {
+    const b = document.getElementById("loginBox");
+    b.style.display = b.style.display === "none" ? "block" : "none";
+}
