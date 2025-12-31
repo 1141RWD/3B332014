@@ -13,42 +13,37 @@ let events = JSON.parse(localStorage.getItem("events")) || defaultEvents;
 
 // --- 1. 初始化 Google Maps ---
 async function initMap() {
-    // 這是新版載入庫的方式，能解決 Autocomplete 的報錯
+    // 1. 新版載入庫的方式，確保 Map 與 Autocomplete 可用
     const { Map } = await google.maps.importLibrary("maps");
     const { Autocomplete } = await google.maps.importLibrary("places");
-    // 檢查 Google Maps 是否真的載入成功了
-    if (typeof google === 'undefined' || typeof google.maps === 'undefined') {
-        console.error("Google Maps API 尚未載入完成");
-        return;
-    }
 
-    // 檢查 Places 函式庫是否存在 (防止第 29 行報錯)
-    if (!google.maps.places) {
-        console.error("Places 函式庫載入失敗，請檢查 HTML 連結是否包含 &libraries=places");
-        return;
-    }
-    // 1. 初始化地圖
+    // 2. 初始化地圖 (直接使用解構出來的 Map)
     const center = { lat: 36.2048, lng: 138.2529 };
-    map = new google.maps.Map(document.getElementById("map"), {
+    map = new Map(document.getElementById("map"), {
         zoom: 5,
         center: center,
-        mapId: "DEMO_MAP_ID", 
+        mapId: "DEMO_MAP_ID", // 建議換成你自己在 Google Console 設定的 Map ID
         mapTypeControl: false,
         streetViewControl: true
     });
 
-    // 2. 啟動搜尋起點功能 (Autocomplete)
+    // 3. 啟動搜尋功能 (直接使用解構出來的 Autocomplete)
     const input = document.getElementById("startPointInput");
-    const autocomplete = new google.maps.places.Autocomplete(input, {
+    if (!input) {
+        console.error("找不到 ID 為 startPointInput 的輸入框");
+        return;
+    }
+
+    const autocomplete = new Autocomplete(input, {
         componentRestrictions: { country: "jp" }, // 限制在日本搜尋
         fields: ["geometry", "name"]
     });
 
-    // 3. 監聽選取事件：當使用者點選下拉選單中的地點時
+    // 4. 監聽選取事件
     autocomplete.addListener("place_changed", () => {
         const place = autocomplete.getPlace();
 
-        if (!place.geometry || !place.geometry.location) {
+        if (!place || !place.geometry || !place.geometry.location) {
             alert("請從下拉選單中選擇正確的地點！");
             return;
         }
@@ -58,35 +53,21 @@ async function initMap() {
         const lng = place.geometry.location.lng();
         const name = "🏠 " + place.name;
 
-        // 觸發加入行程功能 (它會幫你畫出編號 1 標記)
-        addStopToItinerary(lat, lng, name);
+        // 觸發加入行程功能
+        if (typeof addStopToItinerary === 'function') {
+            addStopToItinerary(lat, lng, name);
+        } else {
+            console.error("找不到 addStopToItinerary 函式");
+        }
 
         // 選完後清空文字，方便規劃下一站
         input.value = "";
     });
 
-    renderEvents();
-    updateUI();
+    // 5. 初始化頁面其他組件
+    if (typeof renderEvents === 'function') renderEvents();
+    if (typeof updateUI === 'function') updateUI();
 }
-
-// --- 2. 行程規劃核心邏輯 ---
-// 加入站點（從搜尋或點擊卡片觸發）
-async function addStopToItinerary(lat, lng, name) {
-    if (localStorage.getItem("memberLogin") !== "true") {
-        alert("請先登入會員！");
-        return;
-    }
-
-    const pos = { lat: Number(lat), lng: Number(lng) };
-    
-    // 將新地點加入行程陣列
-    gRoutePoints.push({ pos, name });
-
-    // 更新左側清單與地圖連線
-    renderItineraryUI(); // 這會更新左邊的 1. 某某飯店
-    drawGRoute();        // 這會在地圖上畫出數字標記和藍線
-}
-
 // 渲染右下角清單 UI
 function renderItineraryUI() {
     const list = document.getElementById("itineraryList");
