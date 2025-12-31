@@ -87,17 +87,13 @@
         <h2>🧭 旅遊行程規劃</h2>
         <span class="close-side-btn" onclick="closeRoutePlanner()">×</span>
     </div>
-    
     <div class="side-panel-content">
         <div class="route-section-first">
             <label class="input-label">📍 第一步：設定起點</label>
             <input type="text" id="startPointInput" placeholder="搜尋飯店或車站..." 
                   style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px;">
         </div>
-
-
         <hr style="opacity: 0.3;">
-
         <div class="route-section-second">
             <label class="input-label" style="margin-top:10px;">🚩 第二步：行程清單</label>
             <div id="itineraryList" class="itinerary-list">
@@ -105,23 +101,17 @@
             </div>
         </div>
         <hr style="opacity: 0.3;">
-
         <div class="side-panel-footer">
             <button class="footer-btn clear" onclick="clearItinerary()">清空</button>
             <button class="footer-btn save" onclick="saveCustomerRecord()">儲存紀錄</button>
             <button class="footer-btn save" onclick="exportItinerary()">匯出文檔</button>
         </div>
     </div>
-
-    <div class="side-panel-footer">
-
-     </div>
 </div>
 
 <div id="memberLoginModal" class="modal" onclick="closeMemberLogin(event)">
     <div class="modal-content auth-card">
         <span class="close-btn" onclick="closeMemberLogin(event)">×</span>
-        
         <div id="loginSection">
             <h2 class="auth-title">會員登入</h2>
             <div class="input-group"><input id="memberUser" type="text" required><label>帳號</label></div>
@@ -129,7 +119,6 @@
             <button class="auth-btn primary" onclick="memberLogin()">立即登入</button>
             <p class="auth-footer">還沒有帳號？ <a href="javascript:void(0)" onclick="toggleAuth('reg')">立即註冊</a></p>
         </div>
-
         <div id="registerSection" style="display:none;">
             <h2 class="auth-title">加入會員</h2>
             <div class="input-group"><input id="regUser" type="text" required><label>帳號 (ID)</label></div>
@@ -151,19 +140,26 @@
         <h2 id="modalTitle"></h2>
         <p id="modalLocation" style="font-weight:bold; color:#1e90ff;"></p>
         <p id="modalDesc" style="line-height:1.6;"></p>
-        <p id="modalRoute" style="background:#f0f0f0; padding:12px; border-radius:8px; font-size:14px; margin-top:10px;"></p>
+        <div id="modalRoute" style="background:#f0f0f0; padding:12px; border-radius:8px; font-size:14px; margin-top:10px;"></div>
     </div>
 </div>
 
 <footer>© 2025 JapanGo｜前端互動專題</footer>
+
 <script src="indexjs.js"></script>
 
-<script 
-    async 
-    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAlfgWwpnHQVHsUmktq5s511cDVHvZcz10&libraries=places&callback=initMap">
+<script>
+  (g=>{var h,a,k,p="The Google Maps JavaScript API",c="google",l="importLibrary",q="__ib__",m=document,b=window;b=b[c]||(b[c]={});var d=b.maps||(b.maps={}),r=new Set,e=new URLSearchParams,u=()=>h||(h=new Promise(async(f,n)=>{await (a=m.createElement("script"));e.set("libraries",[...r]+"");for(k in g)e.set(k.replace(/[A-Z]/g,t=>"_"+t[0].toLowerCase()),g[k]);e.set("callback",c+".maps."+q);a.src=`https://maps.${c}apis.com/maps/api/js?`+e;d[q]=f;a.onerror=()=>h=n(Error(p+" could not load."));a.nonce=m.querySelector("script[nonce]")?.nonce||"";m.head.append(a)}));d[l]?console.warn(p+" only loads once. Re-using existing library."):d[l]=(f,...n)=>r.add(f)&&u().then(()=>d[l](f,...n))})({
+    key: "AIzaSyAlfgWwpnHQVHsUmktq5s511cDVHvZcz10",
+    v: "weekly"
+  });
+
+  // 確保頁面載入後自動執行初始化
+  window.addEventListener('load', () => {
+      if (typeof initMap === 'function') {
+          initMap();
+      }
+  });
 </script>
 </body>
-
 </html>
-
-
