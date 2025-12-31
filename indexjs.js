@@ -64,10 +64,10 @@ async function initMap() {
         input.value = "";
     });
 
-    // 5. 初始化頁面其他組件
-    if (typeof renderEvents === 'function') renderEvents();
-    if (typeof updateUI === 'function') updateUI();
+    renderEvents();
+    updateUI();
 }
+
 // 渲染右下角清單 UI
 function renderItineraryUI() {
     const list = document.getElementById("itineraryList");
