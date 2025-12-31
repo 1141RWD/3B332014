@@ -7,7 +7,7 @@ let gRoutePoints = [];  // 存儲行程清單 {pos, name}
 const defaultEvents = [
     // --- 北海道 ---
     {region:"北海道", title:"札幌雪祭", location:"札幌", lat:43.0618, lng:141.3545, desc:"冬季必看雪雕活動", route:"札幌站 → 大通公園", img:"imges/札幌雪祭.jpg"},
-    {region:"北海道", title:"小樽運河", location:"小樽", lat:43.1907, lng:141.0063, desc:"浪漫瓦斯燈與紅磚倉庫", route:"小樽站 → 步行10分鐘", img:"imges/北海道小樽運河.jpg"},
+    {region:"北海道", title:"小樽運河", location:"小樽", lat:43.1907, lng:141.0063, desc:"浪漫瓦斯燈與紅磚倉庫", route:"小樽站 → 步行10分鐘", img:"imges/otaru.jpg"},
     {region:"北海道", title:"旭山動物園", location:"旭川", lat:43.7684, lng:142.4801, desc:"看企鵝散步與北極熊", route:"旭川站 → 接駁巴士", img:"imges/旭山動物園.jpg"},
 
     // --- 本州 ---
