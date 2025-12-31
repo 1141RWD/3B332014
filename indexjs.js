@@ -1,4 +1,5 @@
 // --- 全域變數 ---
+let events = JSON.parse(localStorage.getItem("events")) || defaultEvents;
 let map, gMarker = null, gRouteLine = null;
 let gRouteMarkers = []; // 存儲地圖上的數字標記
 let gRoutePoints = [];  // 存儲行程清單 {pos, name}
