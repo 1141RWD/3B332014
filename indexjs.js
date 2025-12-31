@@ -225,7 +225,7 @@ function memberLogin() {
     if (found) {
         localStorage.setItem("memberLogin", "true");
         localStorage.setItem("currentUserName", found.realName);
-        localStorage.setItem("currentUserEmail", found.email); // 👈 關鍵：存入信箱
+        localStorage.setItem("currentUserEmail", found.email); 
         location.reload();
     } else { 
         alert("帳號或密碼錯誤！"); 
