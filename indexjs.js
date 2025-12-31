@@ -13,7 +13,17 @@ let events = JSON.parse(localStorage.getItem("events")) || defaultEvents;
 
 // --- 1. 初始化 Google Maps ---
 async function initMap() {
-    
+    // 檢查 Google Maps 是否真的載入成功了
+    if (typeof google === 'undefined' || typeof google.maps === 'undefined') {
+        console.error("Google Maps API 尚未載入完成");
+        return;
+    }
+
+    // 檢查 Places 函式庫是否存在 (防止第 29 行報錯)
+    if (!google.maps.places) {
+        console.error("Places 函式庫載入失敗，請檢查 HTML 連結是否包含 &libraries=places");
+        return;
+    }
     // 1. 初始化地圖
     const center = { lat: 36.2048, lng: 138.2529 };
     map = new google.maps.Map(document.getElementById("map"), {
