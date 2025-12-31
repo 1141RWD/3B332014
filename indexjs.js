@@ -143,6 +143,19 @@ async function drawGRoute() {
         });
     }
 }
+// 管理者登入函式 (對應 HTML 裡的管理者登入框)
+function login() {
+    const adminUser = document.getElementById("adminUser").value;
+    const adminPass = document.getElementById("adminPass").value;
+
+    if (adminUser === "admin" && adminPass === "1234") {
+        localStorage.setItem("admin", "true");
+        alert("登入成功，正在前往管理頁面...");
+        window.location.href = "admin.html";
+    } else {
+        alert("帳號或密碼錯誤！");
+    }
+}
 
 function removeStop(index) {
     gRoutePoints.splice(index, 1);
