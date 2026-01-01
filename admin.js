@@ -38,12 +38,20 @@ function switchTab(tabName) {
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
     event.target.classList.add('active');
     
+    // 先隱藏所有內容
+    document.getElementById('eventTabContent').style.display = 'none';
+    document.getElementById('memberTabContent').style.display = 'none';
+    document.getElementById('recordTabContent').style.display = 'none';
+
+    // 顯示指定內容
     if (tabName === 'eventTab') {
         document.getElementById('eventTabContent').style.display = 'block';
-        document.getElementById('memberTabContent').style.display = 'none';
-    } else {
-        document.getElementById('eventTabContent').style.display = 'none';
+    } else if (tabName === 'memberTab') {
         document.getElementById('memberTabContent').style.display = 'block';
+        renderMemberList(); // 確保會員名單有更新
+    } else if (tabName === 'recordTab') {
+        document.getElementById('recordTabContent').style.display = 'block';
+        renderCustomerRecords(); // 【關鍵】切換到此分頁時載入紀錄
     }
 }
 
@@ -172,6 +180,49 @@ function clearForm() {
 function adminLogout() {
     localStorage.removeItem("admin");
     location.href = "index.html";
+}
+
+// --- 渲染使用者行程紀錄 (admin 專用) ---
+function renderCustomerRecords() {
+    const tbody = document.getElementById("recordTableBody");
+    if (!tbody) return;
+
+    // 讀取所有使用者的儲存紀錄
+    const records = JSON.parse(localStorage.getItem("customerRecords")) || [];
+
+    if (records.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">目前尚無任何行程預約紀錄</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = records.map((r, index) => {
+        // 將 itinerary 陣列轉為文字列表
+        const itineraryList = r.itinerary.map(item => item.name).join(' → ');
+        
+        return `
+            <tr>
+                <td>${r.createdAt}</td>
+                <td style="font-weight:bold; color:#2c3e50;">${r.userName}</td>
+                <td>${r.totalStops}</td>
+                <td style="font-size:12px; max-width:300px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${itineraryList}">
+                    ${itineraryList}
+                </td>
+                <td>
+                    <button class="delete-link" onclick="deleteRecord(${index})" style="background:none; border:none; text-decoration:underline;">刪除</button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+// 刪除紀錄函式
+function deleteRecord(index) {
+    if (confirm("確定要刪除這筆預約紀錄嗎？")) {
+        let records = JSON.parse(localStorage.getItem("customerRecords")) || [];
+        records.splice(index, 1);
+        localStorage.setItem("customerRecords", JSON.stringify(records));
+        renderCustomerRecords(); // 刷新表格
+    }
 }
 
 function goTo(p) { location.href = p; }
