@@ -20,6 +20,7 @@
     <div class="tab-group">
         <div class="tab active" onclick="switchTab('eventTab')">景點活動管理</div>
         <div class="tab" onclick="switchTab('memberTab')">註冊會員名單</div>
+        <div class="tab" onclick="switchTab('recordTab')">行程預約管理</div>
     </div>
 
     <div id="eventTabContent">
@@ -79,6 +80,22 @@
             <tbody id="memberTableBody"></tbody>
         </table>
     </div>
+</div>
+<div id="recordTabContent" style="display:none;">
+    <h3> 使用者行程預約紀錄</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>提交時間</th>
+                <th>使用者名稱</th>
+                <th>景點總數</th>
+                <th>詳細行程</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody id="recordTableBody">
+            </tbody>
+    </table>
 </div>
 
 <script src="admin.js"></script>
