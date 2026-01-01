@@ -282,6 +282,83 @@ window.saveCustomerRecord = function() {
     }
 };
 
+// --- 歷史紀錄選單功能 (全域掛載版) ---
+
+// 1. 開關歷史紀錄選單
+window.toggleHistoryList = function() {
+    const container = document.getElementById("historyContainer");
+    if (!container) return;
+
+    if (container.style.display === "none") {
+        container.style.display = "block";
+        window.renderHistoryList(); // 打開時順便刷新列表內容
+    } else {
+        container.style.display = "none";
+    }
+};
+
+// 2. 渲染紀錄列表內容
+window.renderHistoryList = function() {
+    const container = document.getElementById("historyContainer");
+    if (!container) return;
+
+    // 從 localStorage 抓取 customerRecords (確保名稱與之前儲存的一致)
+    const records = JSON.parse(localStorage.getItem("customerRecords")) || [];
+
+    if (records.length === 0) {
+        container.innerHTML = '<p style="font-size: 12px; color: #999; text-align: center; padding: 10px;">尚無紀錄</p>';
+        return;
+    }
+
+    // 生成列表 HTML
+    let html = '<ul style="list-style: none; padding: 0; margin: 0; max-height: 300px; overflow-y: auto;">';
+    
+    records.forEach((record, index) => {
+        html += `
+            <li style="padding: 10px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;">
+                <div style="flex: 1; cursor: pointer;" onclick="viewHistoryDetail(${index})">
+                    <div style="font-size: 13px; font-weight: bold; color: #333;">${record.createdAt}</div>
+                    <div style="font-size: 11px; color: #666;">景點數: ${record.totalStops}</div>
+                </div>
+                <button onclick="deleteHistory(${index})" style="background: none; border: none; color: #ff4d4d; cursor: pointer; font-size: 12px;">刪除</button>
+            </li>
+        `;
+    });
+
+    html += '</ul>';
+    container.innerHTML = html;
+};
+
+// 3. 查看紀錄詳情 (並在地圖上重新繪製)
+window.viewHistoryDetail = function(index) {
+    const records = JSON.parse(localStorage.getItem("customerRecords")) || [];
+    const record = records[index];
+
+    if (record && record.itinerary) {
+        // 更新當前行程點變數 (請確認你的變數名是 gRoutePoints)
+        gRoutePoints = record.itinerary;
+        
+        // 執行你的 UI 更新與地圖畫線函式
+        if (typeof renderItineraryUI === 'function') renderItineraryUI();
+        if (typeof drawGRoute === 'function') drawGRoute();
+        
+        alert("已載入 " + record.createdAt + " 的歷史行程！");
+        // 載入後自動關閉選單
+        document.getElementById("historyContainer").style.display = "none";
+    }
+};
+
+// 4. 刪除紀錄
+window.deleteHistory = function(index) {
+    event.stopPropagation(); // 防止觸發到父層的載入詳情
+    if (confirm("確定要刪除這筆歷史紀錄嗎？")) {
+        let records = JSON.parse(localStorage.getItem("customerRecords")) || [];
+        records.splice(index, 1);
+        localStorage.setItem("customerRecords", JSON.stringify(records));
+        window.renderHistoryList(); // 立即刷新列表
+    }
+};
+
 // --- 會員登入/註冊 UI 互動函式 (全域掛載版) ---
 
 // 1. 切換登入與註冊介面
