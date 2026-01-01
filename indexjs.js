@@ -236,37 +236,75 @@ function openLogin() {
     }
 }
 
-// --- 會員系統互動函式 ---
+// --- 會員登入/註冊 UI 互動函式 ---
 
-// 1. 切換登入與註冊介面 (toggleAuth)
-function toggleAuth() {
-    const loginForm = document.getElementById("loginForm");
-    const registerForm = document.getElementById("registerForm");
-    const authTitle = document.getElementById("authTitle");
+// 1. 切換登入與註冊介面
+function toggleAuth(mode) {
+    const loginSection = document.getElementById("loginSection");
+    const registerSection = document.getElementById("registerSection");
 
-    if (loginForm.style.display === "none") {
-        loginForm.style.display = "block";
-        registerForm.style.display = "none";
-        authTitle.innerText = "會員登入";
+    if (mode === 'reg') {
+        loginSection.style.display = "none";
+        registerSection.style.display = "block";
     } else {
-        loginForm.style.display = "none";
-        registerForm.style.display = "block";
-        authTitle.innerText = "會員註冊";
+        loginSection.style.display = "block";
+        registerSection.style.display = "none";
     }
 }
 
-// 2. 關閉會員登入彈窗 (closeMemberLogin)
-function closeMemberLogin() {
+// 2. 關閉會員登入彈窗 (處理背景點擊與按鈕點擊)
+function closeMemberLogin(event) {
     const modal = document.getElementById("memberLoginModal");
-    if (modal) {
+    // 如果點擊的是背景(modal)或是關閉按鈕，才關閉
+    if (event.target === modal || event.target.classList.contains('close-btn')) {
         modal.style.display = "none";
     }
 }
 
-// 3. 開啟會員登入彈窗 (如果你的按鈕有用到這個名稱)
-function openMemberLogin() {
-    const modal = document.getElementById("memberLoginModal");
-    if (modal) {
-        modal.style.display = "flex";
+// 3. 註冊功能
+function memberRegister() {
+    const username = document.getElementById("regUser").value;
+    const realName = document.getElementById("regRealName").value;
+    const phone = document.getElementById("regPhone").value;
+    const email = document.getElementById("regEmail").value;
+    const pass = document.getElementById("regPass").value;
+    const passConfirm = document.getElementById("regPassConfirm").value;
+
+    if (!username || !pass || !realName) {
+        alert("請填寫必填欄位！");
+        return;
+    }
+    if (pass !== passConfirm) {
+        alert("兩次密碼輸入不一致！");
+        return;
+    }
+
+    let users = JSON.parse(localStorage.getItem("memberUsers")) || [];
+    if (users.find(u => u.username === username)) {
+        alert("此帳號已被註冊！");
+        return;
+    }
+
+    users.push({ username, realName, phone, email, pass });
+    localStorage.setItem("memberUsers", JSON.stringify(users));
+    alert("註冊成功！請重新登入");
+    toggleAuth('login');
+}
+
+// 4. 登入功能
+function memberLogin() {
+    const user = document.getElementById("memberUser").value;
+    const pass = document.getElementById("memberPass").value;
+
+    let users = JSON.parse(localStorage.getItem("memberUsers")) || [];
+    const foundUser = users.find(u => u.username === user && u.pass === pass);
+
+    if (foundUser) {
+        localStorage.setItem("memberLogin", "true");
+        localStorage.setItem("currentUserName", foundUser.realName);
+        alert("歡迎回來，" + foundUser.realName + "！");
+        location.reload(); // 重新整理頁面以更新 UI
+    } else {
+        alert("帳號或密碼錯誤！");
     }
 }
