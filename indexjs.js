@@ -235,3 +235,38 @@ function openLogin() {
         b.style.display = (b.style.display === "none" ? "block" : "none");
     }
 }
+
+// --- 會員系統互動函式 ---
+
+// 1. 切換登入與註冊介面 (toggleAuth)
+function toggleAuth() {
+    const loginForm = document.getElementById("loginForm");
+    const registerForm = document.getElementById("registerForm");
+    const authTitle = document.getElementById("authTitle");
+
+    if (loginForm.style.display === "none") {
+        loginForm.style.display = "block";
+        registerForm.style.display = "none";
+        authTitle.innerText = "會員登入";
+    } else {
+        loginForm.style.display = "none";
+        registerForm.style.display = "block";
+        authTitle.innerText = "會員註冊";
+    }
+}
+
+// 2. 關閉會員登入彈窗 (closeMemberLogin)
+function closeMemberLogin() {
+    const modal = document.getElementById("memberLoginModal");
+    if (modal) {
+        modal.style.display = "none";
+    }
+}
+
+// 3. 開啟會員登入彈窗 (如果你的按鈕有用到這個名稱)
+function openMemberLogin() {
+    const modal = document.getElementById("memberLoginModal");
+    if (modal) {
+        modal.style.display = "flex";
+    }
+}
