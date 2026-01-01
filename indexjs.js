@@ -236,6 +236,52 @@ function openLogin() {
     }
 }
 
+// --- 儲存顧客行程記錄功能 (saveCustomerRecord) ---
+
+window.saveCustomerRecord = function() {
+    // 1. 檢查登入狀態
+    const isLogin = localStorage.getItem("memberLogin") === "true";
+    const currentUserName = localStorage.getItem("currentUserName");
+    
+    if (!isLogin) {
+        alert("請先登入會員，才能提交行程預約記錄！");
+        return;
+    }
+
+    // 2. 檢查是否有行程點
+    if (!gRoutePoints || gRoutePoints.length === 0) {
+        alert("目前的行程清單是空的，請先加入景點後再儲存！");
+        return;
+    }
+
+    // 3. 建立記錄物件
+    const newRecord = {
+        id: "REC" + Date.now(), // 產生唯一的記錄編號
+        userName: currentUserName,
+        itinerary: gRoutePoints, // 儲存經緯度與景點名稱陣列
+        totalStops: gRoutePoints.length,
+        createdAt: new Date().toLocaleString()
+    };
+
+    try {
+        // 4. 讀取現有的記錄清單，並加入新記錄
+        let records = JSON.parse(localStorage.getItem("customerRecords")) || [];
+        records.push(newRecord);
+        
+        // 5. 存回 localStorage
+        localStorage.setItem("customerRecords", JSON.stringify(records));
+        
+        // 6. 成功提示
+        alert("您的行程記錄已成功提交！管理員將會為您進行後續安排。");
+        
+        // 可選：儲存後是否要清空目前地圖上的暫存
+        // clearItinerary(); 
+    } catch (error) {
+        console.error("儲存記錄失敗:", error);
+        alert("儲存失敗，請檢查瀏覽器空間是否充足。");
+    }
+};
+
 // --- 會員登入/註冊 UI 互動函式 (全域掛載版) ---
 
 // 1. 切換登入與註冊介面
