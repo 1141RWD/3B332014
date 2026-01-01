@@ -25,6 +25,13 @@ const defaultEvents = [
 ];
 // 直接拿掉 let 或 var，這樣絕對不會報 Identifier already declared 錯誤
 events = JSON.parse(localStorage.getItem("events")) || defaultEvents;
+// --- 3. 合併資料 (解決消失問題的關鍵) ---
+// 先取得後台新增的資料，若沒有就給空陣列 []
+const adminAddedEvents = JSON.parse(localStorage.getItem("events")) || [];
+
+// 使用展開運算子 (...) 把 12 筆預設跟後台新增的合併在一起
+// 這樣你的 events 永遠會包含最原始的 12 筆 + 新增的 N 筆
+events = [...defaultEvents, ...adminAddedEvents];
 
 // --- 1. 初始化 Google Maps ---
 async function initMap() {
