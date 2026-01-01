@@ -359,6 +359,56 @@ window.deleteHistory = function(index) {
     }
 };
 
+// --- 匯出行程文檔功能 (exportItinerary) ---
+window.exportItinerary = function() {
+    // 1. 檢查是否有行程點
+    if (!gRoutePoints || gRoutePoints.length === 0) {
+        alert("目前的行程清單是空的，無法匯出！");
+        return;
+    }
+
+    // 2. 取得基本資訊
+    const userName = localStorage.getItem("currentUserName") || "訪客";
+    const now = new Date().toLocaleString();
+    
+    // 3. 組合文字內容
+    let content = `========= JapanGo 行程規劃表 =========\n`;
+    content += `匯出時間：${now}\n`;
+    content += `規劃者：${userName}\n`;
+    content += `--------------------------------------\n`;
+    content += `總計景點數：${gRoutePoints.length}\n\n`;
+
+    gRoutePoints.forEach((p, index) => {
+        // 如果 p.name 包含圖示 (如 🏠)，這段文字也會被完整匯出
+        content += `${index + 1}. ${p.name}\n`;
+        // 如果你的點位物件有座標資訊，也可以選擇性加入
+        // content += `   (Lat: ${p.pos.lat}, Lng: ${p.pos.lng})\n`;
+    });
+
+    content += `\n--------------------------------------\n`;
+    content += `祝您旅途愉快！感謝使用 JapanGo。`;
+
+    // 4. 建立檔案並觸發下載
+    try {
+        const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        
+        // 檔名加上時間戳記，避免重複
+        const fileName = `JapanGo_行程_${now.split(' ')[0].replace(/\//g, '-')}.txt`;
+        
+        link.href = url;
+        link.download = fileName;
+        link.click();
+
+        // 釋放記憶體
+        URL.revokeObjectURL(url);
+    } catch (error) {
+        console.error("匯出失敗:", error);
+        alert("匯出文檔時發生錯誤。");
+    }
+};
+
 // --- 會員登入/註冊 UI 互動函式 (全域掛載版) ---
 
 // 1. 切換登入與註冊介面
