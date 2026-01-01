@@ -236,12 +236,13 @@ function openLogin() {
     }
 }
 
-// --- 會員登入/註冊 UI 互動函式 ---
+// --- 會員登入/註冊 UI 互動函式 (全域掛載版) ---
 
 // 1. 切換登入與註冊介面
-function toggleAuth(mode) {
+window.toggleAuth = function(mode) {
     const loginSection = document.getElementById("loginSection");
     const registerSection = document.getElementById("registerSection");
+    if (!loginSection || !registerSection) return;
 
     if (mode === 'reg') {
         loginSection.style.display = "none";
@@ -250,19 +251,21 @@ function toggleAuth(mode) {
         loginSection.style.display = "block";
         registerSection.style.display = "none";
     }
-}
+};
 
-// 2. 關閉會員登入彈窗 (處理背景點擊與按鈕點擊)
-function closeMemberLogin(event) {
+// 2. 關閉會員登入彈窗
+window.closeMemberLogin = function(event) {
     const modal = document.getElementById("memberLoginModal");
-    // 如果點擊的是背景(modal)或是關閉按鈕，才關閉
+    if (!modal) return;
+    
+    // 如果點擊的是背景(modal)或是帶有 close-btn 類別的元素，才關閉
     if (event.target === modal || event.target.classList.contains('close-btn')) {
         modal.style.display = "none";
     }
-}
+};
 
 // 3. 註冊功能
-function memberRegister() {
+window.memberRegister = function() {
     const username = document.getElementById("regUser").value;
     const realName = document.getElementById("regRealName").value;
     const phone = document.getElementById("regPhone").value;
@@ -288,11 +291,11 @@ function memberRegister() {
     users.push({ username, realName, phone, email, pass });
     localStorage.setItem("memberUsers", JSON.stringify(users));
     alert("註冊成功！請重新登入");
-    toggleAuth('login');
-}
+    window.toggleAuth('login');
+};
 
 // 4. 登入功能
-function memberLogin() {
+window.memberLogin = function() {
     const user = document.getElementById("memberUser").value;
     const pass = document.getElementById("memberPass").value;
 
@@ -303,8 +306,15 @@ function memberLogin() {
         localStorage.setItem("memberLogin", "true");
         localStorage.setItem("currentUserName", foundUser.realName);
         alert("歡迎回來，" + foundUser.realName + "！");
-        location.reload(); // 重新整理頁面以更新 UI
+        location.reload(); 
     } else {
         alert("帳號或密碼錯誤！");
     }
-}
+};
+
+// 5. 登出功能 (補充)
+window.memberLogout = function() {
+    localStorage.removeItem("memberLogin");
+    localStorage.removeItem("currentUserName");
+    location.reload();
+};
