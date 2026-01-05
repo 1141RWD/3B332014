@@ -20,19 +20,18 @@ body {
 }
 
 /* ================== Header ================== */
-/* 1. 設定 Header 容器 */
 header {
     position: relative;
-    height: 300px; /* 根據你的需求調整高度 */
+    height: 350px; /* 稍微增加高度增加大氣感 */
     display: flex;
+    flex-direction: column; /* 讓 h1 和 p 上下排列 */
     align-items: center;
     justify-content: center;
     overflow: hidden;
     color: white;
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.7); /* 讓標題文字更清晰 */
+    text-shadow: 2px 2px 8px rgba(0,0,0,0.8); 
 }
 
-/* 2. 建立背景層 */
 header::before {
     content: "";
     position: absolute;
@@ -42,32 +41,39 @@ header::before {
     height: 100%;
     background-size: cover;
     background-position: center;
-    z-index: -1; /* 放在文字後方 */
+    z-index: -1;
     
-    /* 設定動畫：20秒循環一次，無限重複 */
-    animation: bgSlideshow 20s infinite;
-    transition: background-image 1s ease-in-out;
+    /* 加上深色遮罩，讓白字更清楚 */
+    filter: brightness(0.7); 
+
+    /* 動態設定：5張圖建議 25s (每張停約4秒 + 1秒切換) */
+    animation: bgSlideshow 25s infinite;
 }
 
-/* 3. 定義動畫過程 (假設你有 4 張圖) */
 @keyframes bgSlideshow {
-    0%, 20% { background-image: url('imges/otaru.jpg'); }
-    25%, 45% { background-image: url('imges/京都清水寺.jpg'); }
-    50%, 70% { background-image: url('imges/大阪道頓堀.jpg'); }
-    75%, 95% { background-image: url('imges/札幌雪祭.jpg'); }
-    100% { background-image: url('imges/長崎原爆資料館.jpg'); }
+    /* 平均分配 100% / 5 = 20% */
+    0%, 15% { background-image: url('imges/otaru.jpg'); }
+    20%, 35% { background-image: url('imges/京都清水寺.jpg'); }
+    40%, 55% { background-image: url('imges/大阪道頓堀.jpg'); }
+    60%, 75% { background-image: url('imges/札幌雪祭.jpg'); }
+    80%, 95% { background-image: url('imges/長崎原爆資料館.jpg'); }
+    100% { background-image: url('imges/otaru.jpg'); } /* 回到第一張 */
 }
 
-/* 4. 讓標題文字浮在上面 */
 header h1 {
     position: relative;
     z-index: 1;
-    font-size: 3rem;
+    font-size: 3.5rem;
+    margin-bottom: 10px;
+    letter-spacing: 5px; /* 增加字距更有設計感 */
 }
 
 header p {
-  font-size: 16px;
-  opacity: 0.9;
+    position: relative;
+    z-index: 1;
+    font-size: 1.2rem;
+    opacity: 0.95;
+    font-weight: 300;
 }
 /* ================== 管理者按鈕 =================*/
 .login-btn {
@@ -888,3 +894,4 @@ gmpx-place-autocomplete {
 .route-btn-new { background: #f6ffed; color: #4caf50; border: 1px solid #b7eb8f; }
 
 .route-btn-new:hover { background: #d9f7be; }
+
